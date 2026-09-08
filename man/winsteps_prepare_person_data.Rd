@@ -32,8 +32,8 @@ filtered data is used.}
 \item{delimiter}{Single-character (or short string) separator written
 between the ID field and the first item response. Defaults to \code{"*"}.}
 
-\item{missing_code}{Code written for a person-item combination with no
-response. Defaults to \code{"."}.}
+\item{missing_code}{Single-character code written for a person-item
+combination with no response. Defaults to \code{"."}.}
 
 \item{item_order}{Optional character vector giving the exact, ordered
 set of items to include (and their column order). If omitted, items
@@ -55,7 +55,14 @@ A list with:
 \description{
 Winsteps expects one fixed-format line per person: a left-justified,
 fixed-width person ID, followed by a delimiter, followed by one
-character (or fixed-width code) per item in a known, stable order.
-This function performs that reshape without assuming anything about
-item names, ID format, or exam identity.
+character per item in a known, stable order. This function performs that
+reshape without assuming anything about item names, ID format, or exam
+identity.
+}
+\details{
+Every response must render to exactly one character, since \code{ITEM1} and
+\code{NI} are computed on that basis; a wider code (e.g. a partial-credit
+score of \code{10}) would silently shift every column after it, so it is
+rejected instead. Winsteps' mechanism for wider codes is \verb{XWIDE=}, which
+this function does not implement -- recode to single characters first.
 }

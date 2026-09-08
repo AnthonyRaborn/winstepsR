@@ -41,3 +41,41 @@ test_that("write_person_data writes lines to file", {
   winsteps_write_person_data(prepared, tmp)
   expect_equal(readLines(tmp), c("foo", "bar"))
 })
+
+test_that("prepare_person_data rejects multi-character response codes", {
+  # C2: a score of 10 used to be pasted in whole, silently shifting every
+  # response column after it while NI/ITEM1 still described the narrow layout.
+  data <- data.frame(
+    id = c("1", "1"),
+    item = c("A", "B"),
+    score = c(10, 1)
+  )
+  expect_error(
+    winsteps_prepare_person_data(data, "id", "item", "score"),
+    "exactly one character"
+  )
+  expect_error(
+    winsteps_prepare_person_data(data, "id", "item", "score"),
+    "XWIDE"
+  )
+})
+
+test_that("prepare_person_data rejects a multi-character missing_code", {
+  data <- data.frame(id = "1", item = "A", score = NA_real_)
+  expect_error(
+    winsteps_prepare_person_data(data, "id", "item", "score", missing_code = ".."),
+    "missing_code must be exactly one character"
+  )
+})
+
+test_that("prepare_person_data still accepts ordinary single-character codes", {
+  data <- data.frame(
+    id = c("1", "1", "2", "2"),
+    item = c("A", "B", "A", "B"),
+    score = c(1, 0, 2, NA)
+  )
+  prepared <- winsteps_prepare_person_data(
+    data, "id", "item", "score", item_order = c("A", "B")
+  )
+  expect_equal(prepared$lines, c("1*10", "2*2."))
+})

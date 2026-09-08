@@ -2,9 +2,15 @@
 #'
 #' Winsteps expects one fixed-format line per person: a left-justified,
 #' fixed-width person ID, followed by a delimiter, followed by one
-#' character (or fixed-width code) per item in a known, stable order.
-#' This function performs that reshape without assuming anything about
-#' item names, ID format, or exam identity.
+#' character per item in a known, stable order. This function performs that
+#' reshape without assuming anything about item names, ID format, or exam
+#' identity.
+#'
+#' Every response must render to exactly one character, since `ITEM1` and
+#' `NI` are computed on that basis; a wider code (e.g. a partial-credit
+#' score of `10`) would silently shift every column after it, so it is
+#' rejected instead. Winsteps' mechanism for wider codes is `XWIDE=`, which
+#' this function does not implement -- recode to single characters first.
 #'
 #' @param data A data frame in long format with one row per person-item
 #'   response.
@@ -16,8 +22,8 @@
 #'   filtered data is used.
 #' @param delimiter Single-character (or short string) separator written
 #'   between the ID field and the first item response. Defaults to `"*"`.
-#' @param missing_code Code written for a person-item combination with no
-#'   response. Defaults to `"."`.
+#' @param missing_code Single-character code written for a person-item
+#'   combination with no response. Defaults to `"."`.
 #' @param item_order Optional character vector giving the exact, ordered
 #'   set of items to include (and their column order). If omitted, items
 #'   are ordered as they naturally sort after pivoting. Supplying this
@@ -54,6 +60,26 @@ winsteps_prepare_person_data <- function(data,
   long$id <- as.character(long$id)
   long$score <- as.character(suppressWarnings(as.numeric(long$score)))
   long$score[is.na(long$score)] <- missing_code
+
+  # The response block is built one character per item and ITEM1/NI are
+  # computed on that assumption, so a wider code would silently shift every
+  # column after it rather than failing. Winsteps' own mechanism for wider
+  # codes is XWIDE=, which this function does not implement.
+  if (nchar(missing_code) != 1L) {
+    stop("missing_code must be exactly one character, not \"", missing_code,
+         "\". Winsteps reads one character per item unless XWIDE= is set, ",
+         "which this function does not support.", call. = FALSE)
+  }
+  wide_codes <- unique(long$score[nchar(long$score) != 1L])
+  if (length(wide_codes) > 0) {
+    stop("Response codes must be exactly one character each; found ",
+         length(wide_codes), " that are not: ",
+         paste(dQuote(utils::head(wide_codes, 5), FALSE), collapse = ", "),
+         if (length(wide_codes) > 5) ", ..." else "",
+         ". Winsteps reads one character per item unless XWIDE= is set, which ",
+         "this function does not support; recode these responses (e.g. map ",
+         "10 to \"A\") before calling.", call. = FALSE)
+  }
 
   wide <- tidyr::pivot_wider(
     long,
