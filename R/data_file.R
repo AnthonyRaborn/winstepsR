@@ -31,6 +31,18 @@
 #'   explicitly is recommended so that the anchor file and data file stay
 #'   in sync.
 #'
+#' @examples
+#' responses <- data.frame(
+#'   person_id = rep(c("00001", "00002"), each = 2),
+#'   item      = rep(c("q1", "q2"), 2),
+#'   score     = c(1, 0, 1, 1)
+#' )
+#' prepared <- winsteps_prepare_person_data(
+#'   responses, "person_id", "item", "score", item_order = c("q1", "q2")
+#' )
+#' prepared$lines
+#' prepared$item1
+#'
 #' @return A list with:
 #'   \describe{
 #'     \item{lines}{Character vector, one fixed-format line per person.}
@@ -67,7 +79,19 @@ winsteps_prepare_person_data <- function(data,
   long <- data[, c(id_col, item_col, score_col)]
   names(long) <- c("id", "item", "score")
   long$id <- as.character(long$id)
+  raw_score <- long$score
   long$score <- as.character(suppressWarnings(as.numeric(long$score)))
+  # Distinguish "was already missing" from "could not be read as a number":
+  # the second is almost always an upstream problem (a "correct"/"incorrect"
+  # column, a stray "N/A") that would otherwise become a run scoring nobody.
+  unreadable <- is.na(long$score) & !is.na(raw_score)
+  if (any(unreadable)) {
+    bad <- unique(as.character(raw_score[unreadable]))
+    warning(sum(unreadable), " response(s) could not be read as numbers and ",
+            "were written as the missing code \"", missing_code, "\": ",
+            paste(dQuote(utils::head(bad, 5), FALSE), collapse = ", "),
+            if (length(bad) > 5) ", ..." else "", call. = FALSE)
+  }
   long$score[is.na(long$score)] <- missing_code
 
   # The response block is built one character per item and ITEM1/NI are

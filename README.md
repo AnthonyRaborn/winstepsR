@@ -160,6 +160,20 @@ each of which can be used independently for more custom workflows:
 - `winsteps_read_report()` — read a `TFILE=`-requested table report as raw
   lines, handling the missing-file case.
 
+## Input validation
+
+The package errors rather than writing a file Winsteps would accept and
+misread. In particular it rejects response codes wider than one character
+(Winsteps needs `XWIDE=` for those, which this package does not implement),
+non-finite anchor values, duplicated item names, duplicated person-item rows,
+zero-row input, and an empty `keep_items` set. Responses that cannot be read
+as numbers warn rather than silently becoming the missing code.
+
+When `run = TRUE`, a failed Winsteps run raises an error: a non-zero exit
+status, or a run that reports success but writes no PFILE. A PFILE containing
+only its header is *not* a failure — that is Winsteps' normal output for a
+cohort with no estimable persons, and it yields a zero-row `results` tibble.
+
 ## Notes and known gaps
 
 - **Windows only for execution.** File generation works anywhere R runs;

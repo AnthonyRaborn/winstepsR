@@ -125,3 +125,30 @@ test_that("write_person_data rejects anything that is not prepared output", {
   expect_error(winsteps_write_person_data("not a list", tmp),
                "winsteps_prepare_person_data")
 })
+
+test_that("unreadable scores warn instead of silently becoming missing", {
+  # R5: a "correct"/"incorrect" column used to produce an all-missing data
+  # file and a clean run that scored nobody.
+  data <- data.frame(
+    id = c("1", "1"),
+    item = c("A", "B"),
+    score = c("correct", "0")
+  )
+  expect_warning(
+    prepared <- winsteps_prepare_person_data(data, "id", "item", "score"),
+    "could not be read as numbers"
+  )
+  expect_equal(prepared$lines, "1*.0")
+})
+
+test_that("genuinely missing scores do not warn", {
+  data <- data.frame(
+    id = c("1", "1"),
+    item = c("A", "B"),
+    score = c(NA_real_, 0)
+  )
+  expect_no_warning(
+    prepared <- winsteps_prepare_person_data(data, "id", "item", "score")
+  )
+  expect_equal(prepared$lines, "1*.0")
+})

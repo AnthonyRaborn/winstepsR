@@ -95,3 +95,21 @@ errors here. A PFILE containing only its header is \emph{not} a failure --
 that is Winsteps' normal output for a cohort with no estimable persons,
 and it yields a zero-row \code{results} tibble.
 }
+\examples{
+responses <- data.frame(
+  person_id = rep(c("00001", "00002"), each = 2),
+  item      = rep(c("q1", "q2"), 2),
+  score     = c(1, 0, 1, 1)
+)
+
+# Generate the Winsteps input files without running Winsteps, which is
+# possible on any platform.
+result <- winsteps_estimate(
+  data = responses,
+  id_col = "person_id", item_col = "item", score_col = "score",
+  items = c("q1", "q2"), anchor_values = c(-0.4, 0.6),
+  run_id = "example_run", winsteps_exe = "Winsteps.exe", run = FALSE
+)
+result$contents$control
+
+}

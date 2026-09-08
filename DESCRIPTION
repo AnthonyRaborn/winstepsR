@@ -13,8 +13,9 @@ Description: A thin, organization-agnostic interface between R and the Rasch
     project, not in this package.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
 Roxygen: list(markdown = TRUE)
+Depends:
+    R (>= 4.1)
 Imports:
     tidyr,
     readr,

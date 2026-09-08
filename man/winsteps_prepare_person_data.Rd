@@ -67,3 +67,16 @@ score of \code{10}) would silently shift every column after it, so it is
 rejected instead. Winsteps' mechanism for wider codes is \verb{XWIDE=}, which
 this function does not implement -- recode to single characters first.
 }
+\examples{
+responses <- data.frame(
+  person_id = rep(c("00001", "00002"), each = 2),
+  item      = rep(c("q1", "q2"), 2),
+  score     = c(1, 0, 1, 1)
+)
+prepared <- winsteps_prepare_person_data(
+  responses, "person_id", "item", "score", item_order = c("q1", "q2")
+)
+prepared$lines
+prepared$item1
+
+}
