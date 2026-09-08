@@ -431,3 +431,42 @@ test_that("elapsed times are formatted compactly", {
   expect_equal(winstepsR:::format_secs(as.difftime(184, units = "secs")), "3m 04s")
   expect_equal(winstepsR:::format_secs(as.difftime(2, units = "mins")), "2m 00s")
 })
+
+test_that("item names are written as labels so item output is joinable", {
+  # Winsteps treats the item names in the anchor file as comments, so without
+  # labels after &END it names items I0001, I0002, ... and the item output
+  # cannot be matched to the caller's items except by position.
+  data <- data.frame(
+    id = rep(c("001", "002"), each = 3),
+    item = rep(c("q01", "q02", "q03"), 2),
+    score = c(1, 0, 1, 0, 1, 1)
+  )
+  result <- winsteps_estimate(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    anchors = winsteps_anchors(c("q01", "q02", "q03"), c(-0.5, 0, 0.5)),
+    run_id = "labelled", working_dir = tempfile(),
+    winsteps_exe = "Winsteps.exe", run = FALSE
+  )
+  ctrl <- result$contents$control
+  end <- which(ctrl == "&END")
+  expect_length(end, 1)
+  expect_equal(ctrl[(end + 1):(end + 3)], c("q01", "q02", "q03"))
+  expect_equal(ctrl[length(ctrl)], "END LABELS")
+})
+
+test_that("a caller can still supply their own item labels", {
+  data <- data.frame(
+    id = rep("001", 2), item = c("q01", "q02"), score = c(1, 0)
+  )
+  result <- winsteps_estimate(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    anchors = winsteps_anchors(c("q01", "q02"), c(-0.5, 0.5)),
+    run_id = "custom", working_dir = tempfile(),
+    winsteps_exe = "Winsteps.exe", run = FALSE,
+    control_args = list(item_labels = c("Airway management", "Cardiac rhythm"))
+  )
+  ctrl <- result$contents$control
+  end <- which(ctrl == "&END")
+  expect_equal(ctrl[(end + 1):(end + 2)],
+               c("Airway management", "Cardiac rhythm"))
+})

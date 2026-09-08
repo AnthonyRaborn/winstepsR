@@ -2,11 +2,19 @@
 #
 # Run once, on any platform. Responses are simulated from the Rasch model using
 # the same item difficulties that are then used as anchors, so an anchored run
-# against this data is a well-fitting run: displacement should sit near zero,
-# which is what makes it a usable example of anchors being applied correctly.
+# against this data is a well-fitting run and displacement should sit near
+# zero -- which is what makes it a usable example of anchors being applied
+# correctly.
+#
+# The sample size is deliberate. Displacement has to be read against the
+# standard error of the item measure, which is roughly 1/sqrt(n * p * (1-p)):
+# at 30 persons that is around half a logit, so even a perfectly anchored run
+# shows displacements of several tenths and the example teaches the wrong
+# lesson. At 200 it is around 0.15, and displacement near zero means what it
+# looks like it means.
 set.seed(2026)
 
-n_persons <- 30
+n_persons <- 200
 items <- sprintf("q%02d", 1:12)
 difficulty <- round(seq(-2, 2, length.out = length(items)), 2)
 persons <- sprintf("P%03d", seq_len(n_persons))
@@ -30,8 +38,8 @@ responses <- data.frame(
 )
 responses <- responses[order(responses$person_id, responses$item), ]
 
-# A few genuinely missing responses, as any real administration has.
-missing_at <- c(50, 123, 204, 281, 305)
+# A scattering of genuinely missing responses, as any real administration has.
+missing_at <- sort(sample.int(nrow(responses), 25))
 responses$score[missing_at] <- NA_integer_
 
 anchors <- data.frame(

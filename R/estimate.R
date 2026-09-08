@@ -39,7 +39,9 @@
 #'   [winsteps_write_control_file()] (e.g. `estimation`, `codes`,
 #'   `extra`). Cannot include arguments this function derives itself
 #'   (`file`, `data_file`, `n_items`, `item1`, `namlen`, `iafile`, `idfile`,
-#'   `pfile`, `ifile`). Use `control_args$tfile` (e.g. `tfile = "17.1"`) to request
+#'   `pfile`, `ifile`). `item_labels` defaults to the anchor item names, so
+#'   that item output comes back under those names rather than Winsteps'
+#'   invented `I0001`-style ones; pass your own here to override. Use `control_args$tfile` (e.g. `tfile = "17.1"`) to request
 #'   specific Winsteps tables; their output is written to `report_file`
 #'   and read back into `contents$report` (see below).
 #' @param winsteps_exe Passed through to [winsteps_write_bat()].
@@ -135,8 +137,7 @@ winsteps_estimate <- function(data,
     winsteps_write_item_subset_file(anchors, keep = keep_items, file = paths$delete_file)
   }
 
-  do.call(winsteps_write_control_file, c(
-    list(
+  control_defaults <- list(
       file = paths$control_file,
       data_file = basename(paths$data_file),
       n_items = prepared$n_items,
@@ -149,9 +150,17 @@ winsteps_estimate <- function(data,
       idfile = if (!is.null(paths$delete_file)) basename(paths$delete_file) else NULL,
       pfile = basename(paths$person_file),
       ifile = basename(paths$item_file)
-    ),
-    control_args
-  ))
+  )
+  # Winsteps does not read item names from the anchor file -- they sit after a
+  # ";" there, which it treats as a comment -- so without labels written after
+  # &END it invents its own (I0001, I0002, ...) and the item output cannot be
+  # joined back to the caller's item names except by position. Supplied as a
+  # default rather than reserved, so a caller wanting longer descriptive
+  # labels can still pass their own through control_args.
+  if (is.null(control_args$item_labels)) {
+    control_defaults$item_labels <- anchors$items
+  }
+  do.call(winsteps_write_control_file, c(control_defaults, control_args))
 
   winsteps_write_bat(
     file = paths$bat_file,

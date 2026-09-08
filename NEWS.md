@@ -74,6 +74,14 @@ cases into errors at the point the bad input arrives.
 
 ## Item output
 
+* `winsteps_estimate()` writes the item names as control-file labels, so item
+  output comes back under those names. Winsteps treats the names in the anchor
+  file as comments, so without labels after `&END` it invents its own
+  (`I0001`, `I0002`, ...) and `result$items` could not be joined back to the
+  caller's items except by position -- which defeats the purpose of reading
+  item output at all. Pass `control_args$item_labels` to override.
+
+
 * New `winsteps_read_item_output()` reads a Winsteps `IFILE=` into a tibble,
   sharing the PFILE's layout and its handling of empty output. Item names are
   read as text for the same reason person IDs are.

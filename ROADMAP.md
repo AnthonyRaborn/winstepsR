@@ -200,11 +200,17 @@ by default -- and treats a missing IFILE after a successful run as a failure,
 the same way it treats a missing PFILE. `ifile` joins the reserved
 `control_args` names.
 
-**Untested against real output.** There is no IFILE fixture yet; the tests are
-built from the layout the real PFILE confirmed, and the two files are
-documented as sharing a format. Worth checking against a genuine IFILE at the
-next opportunity -- in particular whether the displacement column is named
-`DISPL` there as it is in the PFILE.
+**Verified against real output, 8 Sep 2026.** A genuine IFILE parses cleanly:
+24 columns (the PFILE's 21 plus `G`, `M`, `R`), `DISPL` is indeed the
+displacement column and reads as numeric, and the trailing `M`/`R` columns,
+which carry text and `.` respectively, come back as character without
+disturbing anything else.
+
+That run also exposed a gap the review had missed: item output came back named
+`I0001`, `I0002`, ... rather than by item name. Winsteps treats the item names
+in the anchor file as comments, so they have to be written as labels after
+`&END`. `winsteps_estimate()` now does that, which is what makes `result$items`
+joinable to the caller's items at all.
 
 ### 1b. `winsteps_read_control_file()`
 

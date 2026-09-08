@@ -55,7 +55,9 @@ created for this run's files. Defaults to a temp directory.}
 \code{\link[=winsteps_write_control_file]{winsteps_write_control_file()}} (e.g. \code{estimation}, \code{codes},
 \code{extra}). Cannot include arguments this function derives itself
 (\code{file}, \code{data_file}, \code{n_items}, \code{item1}, \code{namlen}, \code{iafile}, \code{idfile},
-\code{pfile}, \code{ifile}). Use \code{control_args$tfile} (e.g. \code{tfile = "17.1"}) to request
+\code{pfile}, \code{ifile}). \code{item_labels} defaults to the anchor item names, so
+that item output comes back under those names rather than Winsteps'
+invented \code{I0001}-style ones; pass your own here to override. Use \code{control_args$tfile} (e.g. \code{tfile = "17.1"}) to request
 specific Winsteps tables; their output is written to \code{report_file}
 and read back into \code{contents$report} (see below).}
 
