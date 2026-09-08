@@ -52,6 +52,7 @@ result <- winsteps_estimate(
   run_id = "example_run"
 )
 
+result          # a winsteps_result: prints a summary of the run
 result$results  # tibble read from Winsteps' PFILE
 
 # result$*_file paths point into working_dir (a temp dir by default, which
@@ -64,6 +65,23 @@ result$contents$data     # the Winsteps person-data file as written
 result$contents$anchor   # the IAFILE as written
 result$contents$person   # the raw PFILE lines Winsteps produced
 result$contents$report   # raw lines of any TFILE=-requested tables (see below)
+```
+
+Both `winsteps_estimate()` and `winsteps_prepare_person_data()` return classed
+objects that print a summary rather than their full contents, so inspecting one
+at the console tells you what the run did instead of scrolling past every
+response line:
+
+```
+<winsteps_result> exam1_domain2
+  Directory /tmp/wtest/exam1_domain2
+  Items     50 anchored, 12 estimated (38 excluded via IDFILE)
+  Persons   1204
+  Winsteps  run; 1204 person measures returned
+  Files     data.dat, anchor.txt, delete.txt, control.ctr, run.bat, person.out, OUT.csv
+
+  $contents  data, anchor, delete, control, bat, person, report
+  $results   tibble 1204 x 11
 ```
 
 ### Requesting specific Winsteps tables (e.g. Table 17.1)

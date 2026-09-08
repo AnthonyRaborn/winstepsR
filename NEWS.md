@@ -48,6 +48,11 @@ cases into errors at the point the bad input arrives.
   object that prints the fixed-width layout -- which columns hold the ID, the
   delimiter and the responses -- instead of dumping every person's response
   line at the console.
+* `winsteps_estimate()` returns a classed `winsteps_result` object carrying
+  `run_id` and `run_dir` alongside the paths it already returned. It prints a
+  summary of the run -- items anchored and estimated, persons, whether Winsteps
+  ran, files on disk -- instead of dumping every line of every file it read
+  back.
 * `winsteps_estimate()` delegates its file paths and its read-back step to
   internal helpers, so its body reads as prepare, write, run, read.
 

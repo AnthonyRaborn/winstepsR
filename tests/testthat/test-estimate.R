@@ -196,3 +196,74 @@ test_that("run paths live in one place and only include a delete file when neede
   subset_paths <- winstepsR:::winsteps_run_paths("/tmp/run1", subset = TRUE)
   expect_equal(basename(subset_paths$delete_file), "delete.txt")
 })
+
+test_that("winsteps_estimate returns a classed result that prints a summary", {
+  data <- data.frame(
+    id = rep(sprintf("%05d", 1:3), each = 4),
+    item = rep(c("q1", "q2", "q3", "q4"), 3),
+    score = rep(c(1, 0, 1, 1), 3)
+  )
+  tmp_dir <- tempfile()
+  on.exit(unlink(tmp_dir, recursive = TRUE))
+
+  result <- winsteps_estimate(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    items = c("q1", "q2", "q3", "q4"), anchor_values = c(-1, -0.3, 0.4, 1.2),
+    run_id = "exam1", working_dir = tmp_dir, winsteps_exe = "Winsteps.exe",
+    run = FALSE
+  )
+  expect_s3_class(result, "winsteps_result")
+  expect_equal(result$run_id, "exam1")
+  expect_equal(result$run_dir, file.path(tmp_dir, "exam1"))
+
+  out <- capture.output(print(result))
+  expect_match(out[1], "exam1")
+  expect_true(any(grepl("4 anchored", out)))
+  expect_true(any(grepl("Persons   3", out)))
+  expect_true(any(grepl("not run", out)))
+  # files Winsteps has not written yet are not claimed as present
+  expect_false(any(grepl("person.out", out)))
+  # and the whole thing stays a summary
+  expect_lt(length(out), 15)
+})
+
+test_that("the printed summary reports the item subset when one is used", {
+  data <- data.frame(
+    id = rep("00001", 4),
+    item = c("q1", "q2", "q3", "q4"),
+    score = c(1, 0, 1, 1)
+  )
+  result <- winsteps_estimate(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    items = c("q1", "q2", "q3", "q4"), anchor_values = c(-1, -0.3, 0.4, 1.2),
+    keep_items = c("q1", "q2"), run_id = "dom", working_dir = tempfile(),
+    winsteps_exe = "Winsteps.exe", run = FALSE
+  )
+  out <- capture.output(print(result))
+  expect_true(any(grepl("2 estimated \\(2 excluded via IDFILE\\)", out)))
+  expect_true(any(grepl("delete.txt", out)))
+})
+
+test_that("the printed summary reports measures when Winsteps has run", {
+  # The run = TRUE branch cannot execute off Windows, so exercise the print
+  # method against a result shaped the way that branch produces.
+  result <- structure(
+    list(
+      run_id = "exam1", run_dir = "/tmp/exam1",
+      data_file = "/tmp/exam1/data.dat", anchor_file = "/tmp/exam1/anchor.txt",
+      delete_file = NULL, control_file = "/tmp/exam1/control.ctr",
+      bat_file = "/tmp/exam1/run.bat", person_file = "/tmp/exam1/person.out",
+      report_file = "/tmp/exam1/OUT.csv",
+      contents = list(
+        data = rep("00001*1011", 40), anchor = rep("a", 4), delete = NULL,
+        control = "NI=4;", bat = "x", person = rep("p", 41), report = "TABLE 17.1"
+      ),
+      results = tibble::tibble(NAME = rep("00001", 40), MEASURE = rep(0.5, 40))
+    ),
+    class = "winsteps_result"
+  )
+  out <- capture.output(print(result))
+  expect_true(any(grepl("run; 40 person measures returned", out)))
+  expect_true(any(grepl("\\$results   tibble 40 x 2", out)))
+  expect_true(any(grepl("person, report", out)))
+})

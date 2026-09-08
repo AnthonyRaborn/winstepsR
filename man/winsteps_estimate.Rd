@@ -59,7 +59,10 @@ to \code{FALSE} to only generate input files (e.g. to inspect them, or to
 run Winsteps manually / on a different machine).}
 }
 \value{
-A list with the paths of every file written (\code{data_file},
+An object of class \code{winsteps_result}, which prints as a summary of
+the run rather than dumping every file it read back. Underneath it is a
+list carrying \code{run_id} and \code{run_dir}; the paths of every file written
+(\code{data_file},
 \code{anchor_file}, \code{delete_file}, \code{control_file}, \code{bat_file},
 \code{person_file}, \code{report_file}); a parallel \code{contents} list holding the
 actual lines written to each of those files (\code{contents$data},

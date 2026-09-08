@@ -66,7 +66,10 @@
 #' )
 #' result$contents$control
 #'
-#' @return A list with the paths of every file written (`data_file`,
+#' @return An object of class `winsteps_result`, which prints as a summary of
+#'   the run rather than dumping every file it read back. Underneath it is a
+#'   list carrying `run_id` and `run_dir`; the paths of every file written
+#'   (`data_file`,
 #'   `anchor_file`, `delete_file`, `control_file`, `bat_file`,
 #'   `person_file`, `report_file`); a parallel `contents` list holding the
 #'   actual lines written to each of those files (`contents$data`,
@@ -138,7 +141,7 @@ winsteps_estimate <- function(data,
     winsteps_exe = winsteps_exe
   )
 
-  result <- paths
+  result <- c(list(run_id = run_id, run_dir = run_dir), paths)
   result$contents <- winsteps_read_back(paths)
 
   if (run) {
@@ -163,7 +166,48 @@ winsteps_estimate <- function(data,
     result$contents$report <- winsteps_read_report(paths$report_file)
   }
 
-  result
+  structure(result, class = "winsteps_result")
+}
+
+#' @export
+print.winsteps_result <- function(x, ...) {
+  cat("<winsteps_result> ", x$run_id, "\n", sep = "")
+
+  field <- function(label, value) {
+    cat("  ", formatC(label, width = -10), value, "\n", sep = "")
+  }
+  field("Directory", x$run_dir)
+  field("Items", paste0(
+    length(x$contents$anchor), " anchored",
+    if (!is.null(x$contents$delete)) {
+      paste0(", ", length(x$contents$anchor) - length(x$contents$delete),
+             " estimated (", length(x$contents$delete), " excluded via IDFILE)")
+    } else ""
+  ))
+  field("Persons", length(x$contents$data))
+
+  if (is.null(x$results)) {
+    field("Winsteps", "not run - input files generated only")
+  } else {
+    field("Winsteps", paste0("run; ", nrow(x$results), " person measures returned"))
+  }
+
+  # unlist() drops the NULL delete_file when no item subset was used; the
+  # existence check then drops the output files Winsteps has not written yet.
+  candidates <- unlist(x[c("data_file", "anchor_file", "delete_file",
+                           "control_file", "bat_file", "person_file",
+                           "report_file")])
+  field("Files", paste(basename(candidates[file.exists(candidates)]),
+                       collapse = ", "))
+
+  held <- names(x$contents)[!vapply(x$contents, is.null, logical(1))]
+  cat("\n  $contents  ", paste(held, collapse = ", "), "\n", sep = "")
+  if (is.null(x$results)) {
+    cat("  $results   NULL (run = FALSE)\n")
+  } else {
+    cat("  $results   tibble ", nrow(x$results), " x ", ncol(x$results), "\n", sep = "")
+  }
+  invisible(x)
 }
 
 # The fixed set of files a run reads and writes, all inside its own directory.
