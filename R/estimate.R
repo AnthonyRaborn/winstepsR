@@ -76,7 +76,10 @@
 #'   list carrying `run_id` and `run_dir`; the paths of every file written
 #'   (`data_file`,
 #'   `anchor_file`, `delete_file`, `control_file`, `bat_file`,
-#'   `person_file`, `item_file`, `report_file`); a parallel `contents` list holding the
+#'   `person_file`, `item_file`, `report_file`); `run_at` and `elapsed`
+#'   recording when the call started and how long it took, plus
+#'   `winsteps_elapsed` for the Winsteps invocation alone when `run = TRUE`;
+#'   a parallel `contents` list holding the
 #'   actual lines written to each of those files (`contents$data`,
 #'   `contents$anchor`, `contents$delete`, `contents$control`,
 #'   `contents$bat`, and, if `run = TRUE`, `contents$person` -- the raw
@@ -101,6 +104,8 @@ winsteps_estimate <- function(data,
                                control_args = list(),
                                winsteps_exe = getOption("winstepsR.exe_path"),
                                run = TRUE) {
+  started <- Sys.time()
+
   anchors <- resolve_anchors(anchors, items, anchor_values)
   items <- anchors$items
   # Checked before anything is written, so a bad domain filter fails without
@@ -155,13 +160,16 @@ winsteps_estimate <- function(data,
     winsteps_exe = winsteps_exe
   )
 
-  result <- c(list(run_id = run_id, run_dir = run_dir), paths)
+  result <- c(list(run_id = run_id, run_dir = run_dir, run_at = started), paths)
   result$contents <- winsteps_read_back(paths)
 
   if (run) {
     # Errors on a non-zero exit status, so a crashed run cannot be mistaken
     # downstream for a cohort with no eligible persons.
+    winsteps_started <- Sys.time()
     winsteps_run(paths$bat_file)
+    result$winsteps_elapsed <- difftime(Sys.time(), winsteps_started,
+                                        units = "secs")
 
     # A run that succeeded but wrote no PFILE at all is a failure, not an empty
     # cohort: Winsteps writes at least a header line when it estimates nobody.
@@ -196,6 +204,7 @@ winsteps_estimate <- function(data,
     result$contents$report <- winsteps_read_report(paths$report_file)
   }
 
+  result$elapsed <- difftime(Sys.time(), started, units = "secs")
   structure(result, class = "winsteps_result")
 }
 
@@ -207,6 +216,15 @@ print.winsteps_result <- function(x, ...) {
     cat("  ", formatC(label, width = -10), value, "\n", sep = "")
   }
   field("Directory", x$run_dir)
+  if (!is.null(x$run_at)) {
+    field("Run at", paste0(format(x$run_at, "%Y-%m-%d %H:%M:%S"), "  (",
+                           format_secs(x$elapsed),
+                           if (!is.null(x$winsteps_elapsed)) {
+                             paste0(", ", format_secs(x$winsteps_elapsed),
+                                    " of it in Winsteps")
+                           } else "",
+                           ")"))
+  }
   field("Items", paste0(
     length(x$contents$anchor), " anchored",
     if (!is.null(x$contents$delete)) {
@@ -277,4 +295,13 @@ winsteps_read_back <- function(paths) {
     control = read_or_null(paths$control_file),
     bat     = read_or_null(paths$bat_file)
   )
+}
+
+# Compact elapsed-time label for print(): "0.4s", "12.7s", "3m 04s".
+format_secs <- function(x) {
+  secs <- as.numeric(x, units = "secs")
+  if (is.na(secs)) return("unknown")
+  if (secs < 60) return(paste0(formatC(secs, format = "f", digits = 1), "s"))
+  paste0(secs %/% 60, "m ", formatC(secs %% 60, format = "f", digits = 0,
+                                    width = 2, flag = "0"), "s")
 }

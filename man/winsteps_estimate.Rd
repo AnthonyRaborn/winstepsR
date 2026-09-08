@@ -71,7 +71,10 @@ the run rather than dumping every file it read back. Underneath it is a
 list carrying \code{run_id} and \code{run_dir}; the paths of every file written
 (\code{data_file},
 \code{anchor_file}, \code{delete_file}, \code{control_file}, \code{bat_file},
-\code{person_file}, \code{item_file}, \code{report_file}); a parallel \code{contents} list holding the
+\code{person_file}, \code{item_file}, \code{report_file}); \code{run_at} and \code{elapsed}
+recording when the call started and how long it took, plus
+\code{winsteps_elapsed} for the Winsteps invocation alone when \code{run = TRUE};
+a parallel \code{contents} list holding the
 actual lines written to each of those files (\code{contents$data},
 \code{contents$anchor}, \code{contents$delete}, \code{contents$control},
 \code{contents$bat}, and, if \code{run = TRUE}, \code{contents$person} -- the raw

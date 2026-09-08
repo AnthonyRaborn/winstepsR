@@ -17,7 +17,8 @@
 #' @param ... Ignored.
 #'
 #' @return An object of class `summary.winsteps_result`: a list with `run_id`,
-#'   `n`, the `measure` and `se` distributions, and `n_zero` / `n_perfect`,
+#'   `n`, the run's `run_at` / `elapsed` provenance, the `measure` and `se`
+#'   distributions, and `n_zero` / `n_perfect`,
 #'   suitable for programmatic use as well as printing. Fields that the PFILE
 #'   did not carry are `NULL`.
 #' @export
@@ -29,7 +30,9 @@
 #' measures$MEASURE
 summary.winsteps_result <- function(object, ...) {
   res <- object$results
-  out <- list(run_id = object$run_id, ran = !is.null(res), n = NROW(res))
+  out <- list(run_id = object$run_id, ran = !is.null(res), n = NROW(res),
+              run_at = object$run_at, elapsed = object$elapsed,
+              winsteps_elapsed = object$winsteps_elapsed)
 
   if (!is.null(res) && "MEASURE" %in% names(res)) {
     m <- res$MEASURE[is.finite(res$MEASURE)]
@@ -57,6 +60,10 @@ print.summary.winsteps_result <- function(x, ...) {
   cat("<winsteps_result summary> ", x$run_id, "\n", sep = "")
   field <- function(label, value) {
     cat("  ", formatC(label, width = -16), value, "\n", sep = "")
+  }
+  if (!is.null(x$run_at)) {
+    field("Run at", paste0(format(x$run_at, "%Y-%m-%d %H:%M:%S"), "  (",
+                           format_secs(x$elapsed), ")"))
   }
   num <- function(v, digits = 2) formatC(v, format = "f", digits = digits)
 

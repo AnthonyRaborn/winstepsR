@@ -206,12 +206,18 @@ A faithful round-trip is harder than `read.wcmd()` makes it look -- that
 implementation lowercases every value it reads, which corrupts file paths on a
 case-sensitive filesystem and any `TITLE=` text.
 
-### 1c. Run metadata on `winsteps_result`
+### 1c. Run metadata on `winsteps_result` -- **done**
 
-Rwinsteps records `daterun` and `comptime` on its result object. Free to add in
-`winsteps_estimate()`, and for a package descended from a daily score check,
-"when did this run, and how long did it take" is exactly the provenance a log
-wants. Fits the existing `print()` summary without redesigning it.
+Rwinsteps records `daterun` and `comptime` on its result object. For a package
+descended from a daily score check, "when did this run, and how long did it
+take" is exactly the provenance a log wants.
+
+`winsteps_estimate()` now records `run_at` (when the call started) and
+`elapsed` (how long it took), plus `winsteps_elapsed` for the Winsteps
+invocation alone when `run = TRUE`. Splitting the two answers a question one
+number cannot: whether time is going into Winsteps or into the R-side reshape
+and file writing. Both appear in `print()` and in `summary()`, and both are
+plain `POSIXct` / `difftime`, so a log can use them directly.
 
 ### Declined
 

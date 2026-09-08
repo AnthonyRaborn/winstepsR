@@ -13,7 +13,8 @@
 }
 \value{
 An object of class \code{summary.winsteps_result}: a list with \code{run_id},
-\code{n}, the \code{measure} and \code{se} distributions, and \code{n_zero} / \code{n_perfect},
+\code{n}, the run's \code{run_at} / \code{elapsed} provenance, the \code{measure} and \code{se}
+distributions, and \code{n_zero} / \code{n_perfect},
 suitable for programmatic use as well as printing. Fields that the PFILE
 did not carry are \code{NULL}.
 }

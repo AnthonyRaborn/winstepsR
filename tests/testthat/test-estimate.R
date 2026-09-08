@@ -374,3 +374,60 @@ test_that("winsteps_estimate requests item output and reserves the ifile argumen
     "control_args cannot set argument\\(s\\).*ifile"
   )
 })
+
+test_that("the result records when the run happened and how long it took", {
+  data <- data.frame(
+    id = rep(c("001", "002"), each = 2),
+    item = rep(c("A", "B"), 2),
+    score = c(1, 0, 0, 1)
+  )
+  before <- Sys.time()
+  result <- winsteps_estimate(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    anchors = winsteps_anchors(c("A", "B"), c(-0.5, 0.5)),
+    run_id = "timed", working_dir = tempfile(),
+    winsteps_exe = "Winsteps.exe", run = FALSE
+  )
+  after <- Sys.time()
+
+  expect_s3_class(result$run_at, "POSIXct")
+  expect_gte(as.numeric(result$run_at), as.numeric(before))
+  expect_lte(as.numeric(result$run_at), as.numeric(after))
+
+  expect_s3_class(result$elapsed, "difftime")
+  expect_equal(units(result$elapsed), "secs")
+  expect_gte(as.numeric(result$elapsed), 0)
+  expect_lte(as.numeric(result$elapsed), as.numeric(difftime(after, before, units = "secs")))
+
+  # Winsteps was not invoked, so there is no Winsteps-only timing
+  expect_null(result$winsteps_elapsed)
+
+  out <- capture.output(print(result))
+  expect_true(any(grepl("Run at", out)))
+  expect_true(any(grepl("[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", out)))
+  # no Winsteps-only figure is claimed when Winsteps did not run
+  expect_false(any(grepl("in Winsteps", out)))
+})
+
+test_that("the printed summary reports Winsteps' own elapsed time when it ran", {
+  result <- structure(
+    list(run_id = "exam1", run_dir = "/tmp/exam1",
+         run_at = as.POSIXct("2026-09-08 11:19:04", tz = "UTC"),
+         elapsed = as.difftime(4.2, units = "secs"),
+         winsteps_elapsed = as.difftime(3.8, units = "secs"),
+         data_file = "/tmp/exam1/data.dat", delete_file = NULL,
+         contents = list(anchor = rep("a", 3), data = rep("d", 2)),
+         results = tibble::tibble(NAME = c("1", "2"), MEASURE = c(0, 1))),
+    class = "winsteps_result"
+  )
+  out <- capture.output(print(result))
+  expect_true(any(grepl("2026-09-08 11:19:04", out)))
+  expect_true(any(grepl("4.2s, 3.8s of it in Winsteps", out, fixed = TRUE)))
+})
+
+test_that("elapsed times are formatted compactly", {
+  expect_equal(winstepsR:::format_secs(as.difftime(0.42, units = "secs")), "0.4s")
+  expect_equal(winstepsR:::format_secs(as.difftime(12.7, units = "secs")), "12.7s")
+  expect_equal(winstepsR:::format_secs(as.difftime(184, units = "secs")), "3m 04s")
+  expect_equal(winstepsR:::format_secs(as.difftime(2, units = "mins")), "2m 00s")
+})

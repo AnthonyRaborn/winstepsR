@@ -89,6 +89,16 @@ cases into errors at the point the bad input arrives.
   missing IFILE after a successful run is now an error rather than an empty
   result. What counts as excessive displacement is left to the caller.
 
+## Provenance
+
+* `winsteps_estimate()` records `run_at` (when the call started) and `elapsed`
+  (how long it took) on its result, plus `winsteps_elapsed` for the Winsteps
+  invocation alone when `run = TRUE`. Keeping the two apart shows whether time
+  is going into Winsteps or into the R-side reshape and file writing. Both are
+  plain `POSIXct` and `difftime`, and both appear in `print()` and `summary()`,
+  so a daily log can record when a scoring run happened and how long it took
+  without instrumenting the call site.
+
 ## Methods
 
 * `summary()` on a `winsteps_result` reports the distribution of the person
