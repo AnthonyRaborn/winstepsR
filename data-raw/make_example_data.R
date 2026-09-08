@@ -45,7 +45,11 @@ responses$score[missing_at] <- NA_integer_
 anchors <- data.frame(
   item   = items,
   value  = difficulty,
-  domain = rep(c("domain1", "domain2"), each = 6),
+  # Interleaved, not split down the middle: a domain made only of the six
+  # easiest items is answered correctly by almost everyone, so a domain run
+  # against it returns a mass of perfect scores and demonstrates nothing.
+  # Alternating keeps both domains spanning the full difficulty range.
+  domain = rep(c("domain1", "domain2"), length.out = length(items)),
   stringsAsFactors = FALSE
 )
 

@@ -17,12 +17,18 @@ Use this file for format, never as an example of what a correct run produces.
 ## Example run set
 
 `example_responses.csv` and `example_anchors.csv` are the inputs to a worked
-example: 200 persons, 12 items in two domains of six, 25 genuinely missing
+example: 200 persons, 12 items in two interleaved domains of six, 25 genuinely missing
 responses, and persons at both score extremes. Responses are simulated from
 the Rasch model using the same difficulties that then serve as anchors, so an
 anchored run against this data is a well-fitting one and displacement should
 sit near zero -- which is what makes it usable as an example of anchors being
 applied correctly.
+
+The domains alternate rather than splitting the item list down the middle. A
+domain made only of the six easiest items is answered correctly by almost
+everyone, so a domain run against it returns a mass of perfect scores and
+demonstrates nothing; alternating keeps both domains spanning the full
+difficulty range.
 
 The sample size is deliberate: displacement must be read against the standard
 error of the item measure, which is about half a logit at 30 persons and about

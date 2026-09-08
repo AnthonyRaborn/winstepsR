@@ -51,6 +51,22 @@ test_that("the example data exercises the extreme-score paths", {
   expect_gte(sum(totals == 0), 1)    # at least one zero score
 })
 
+test_that("each example domain spans the full difficulty range", {
+  anch_path <- system.file("extdata", "example_anchors.csv", package = "winstepsR")
+  skip_if(anch_path == "", "example data not installed")
+  anchor_tbl <- utils::read.csv(anch_path,
+                                colClasses = c("character", "numeric", "character"))
+
+  # A domain of only the easiest items is answered correctly by nearly
+  # everyone, which makes a domain run degenerate rather than illustrative.
+  by_domain <- split(anchor_tbl$value, anchor_tbl$domain)
+  expect_length(by_domain, 2)
+  for (d in by_domain) {
+    expect_lt(min(d), -1)
+    expect_gt(max(d), 1)
+  }
+})
+
 test_that("a domain subset of the example items excludes the rest", {
   anch_path <- system.file("extdata", "example_anchors.csv", package = "winstepsR")
   skip_if(anch_path == "", "example data not installed")
@@ -65,5 +81,6 @@ test_that("a domain subset of the example items excludes the rest", {
 
   deleted <- readLines(tmp)
   expect_length(deleted, 6)
-  expect_true(all(grepl("q(07|08|09|10|11|12)$", deleted)))
+  # domains are interleaved, so the deleted set is the even-numbered items
+  expect_true(all(grepl("q(02|04|06|08|10|12)$", deleted)))
 })

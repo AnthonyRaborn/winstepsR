@@ -9,7 +9,28 @@
 
 options(winstepsR.exe_path = "C:/Winsteps/Winsteps.exe")   # <- edit if needed
 
+# Install the current source first -- library() below loads whatever is in the
+# library, and a stale build produces output that looks fine and is wrong (item
+# names come back as I0001, I0002, ... instead of the real ones).
+#   devtools::install()      # from the package root
 library(winstepsR)
+
+# Refuse to run against a build that predates the item-label fix, rather than
+# writing nine files that all have to be thrown away.
+local({
+  probe <- winsteps_estimate(
+    data = data.frame(id = "1", item = c("zzz1", "zzz2"), score = c(1, 0)),
+    id_col = "id", item_col = "item", score_col = "score",
+    anchors = winsteps_anchors(c("zzz1", "zzz2"), c(-0.5, 0.5)),
+    run_id = "probe", working_dir = tempfile(),
+    winsteps_exe = "Winsteps.exe", run = FALSE
+  )
+  if (!all(c("zzz1", "zzz2") %in% probe$contents$control)) {
+    stop("The installed winstepsR does not write item labels, so item output ",
+         "would come back named I0001, I0002, ... Run devtools::install() ",
+         "from the package root and try again.", call. = FALSE)
+  }
+})
 
 stopifnot(file.exists("inst/extdata/example_responses.csv"))
 responses <- utils::read.csv("inst/extdata/example_responses.csv",
@@ -32,6 +53,7 @@ full <- winsteps_estimate(
 
 # --- Run 2: one domain only, to exercise IDFILE ------------------------------
 domain1 <- anchor_tbl$item[anchor_tbl$domain == "domain1"]
+stopifnot(length(domain1) == 6)
 domain <- winsteps_estimate(
   data = responses,
   id_col = "person_id", item_col = "item", score_col = "score",
