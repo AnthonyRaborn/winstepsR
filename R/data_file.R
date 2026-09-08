@@ -43,7 +43,9 @@
 #' prepared$lines
 #' prepared$item1
 #'
-#' @return A list with:
+#' @return An object of class `winsteps_person_data`: a list with the
+#'   elements below, which prints as a summary of the fixed-width layout
+#'   rather than as the full response block.
 #'   \describe{
 #'     \item{lines}{Character vector, one fixed-format line per person.}
 #'     \item{items}{Character vector of item names, in file column order.}
@@ -106,14 +108,43 @@ winsteps_prepare_person_data <- function(data,
   response_block <- do.call(paste0, wide[item_order])
   lines <- paste0(ids, delimiter, response_block)
 
-  list(
-    lines = lines,
-    items = item_order,
-    n_items = length(item_order),
-    id_width = id_width,
-    item1 = id_width + nchar(delimiter) + 1L,
-    delimiter = delimiter
+  structure(
+    list(
+      lines = lines,
+      items = item_order,
+      n_items = length(item_order),
+      id_width = id_width,
+      item1 = id_width + nchar(delimiter) + 1L,
+      delimiter = delimiter
+    ),
+    class = "winsteps_person_data"
   )
+}
+
+#' @export
+print.winsteps_person_data <- function(x, n = 3, ...) {
+  span <- function(from, to) if (to > from) paste0(from, "-", to) else as.character(from)
+  id_end <- x$id_width
+  delim_end <- id_end + nchar(x$delimiter)
+
+  row <- function(label, cols, note) {
+    cat("  ", formatC(label, width = -10), formatC(cols, width = -8), note, "\n", sep = "")
+  }
+  cat("<winsteps_person_data> ", length(x$lines), " persons x ", x$n_items,
+      " items\n", sep = "")
+  row("ID field", span(1, id_end), paste0("NAMLEN=", x$id_width))
+  row("Delimiter", span(id_end + 1, delim_end), paste0("\"", x$delimiter, "\""))
+  row("Responses", span(x$item1, delim_end + x$n_items),
+      paste0("ITEM1=", x$item1, ", NI=", x$n_items))
+
+  shown <- utils::head(x$lines, n)
+  if (length(shown) > 0) {
+    cat("\n", paste0("  ", shown, collapse = "\n"), "\n", sep = "")
+    if (length(x$lines) > length(shown)) {
+      cat("  ... ", length(x$lines) - length(shown), " more\n", sep = "")
+    }
+  }
+  invisible(x)
 }
 
 #' Write prepared Winsteps person-data lines to a file
@@ -122,6 +153,8 @@ winsteps_prepare_person_data <- function(data,
 #' @param file Path to write the Winsteps `DATA=` file to.
 #' @export
 winsteps_write_person_data <- function(prepared, file) {
+  # Duck-typed rather than requiring the class, so a hand-built list still
+  # works for callers assembling the layout themselves.
   if (!is.list(prepared) || !is.character(prepared$lines)) {
     stop("prepared must be the list returned by winsteps_prepare_person_data(), ",
          "with a character `lines` element", call. = FALSE)

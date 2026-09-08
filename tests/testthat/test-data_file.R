@@ -152,3 +152,34 @@ test_that("genuinely missing scores do not warn", {
   )
   expect_equal(prepared$lines, "1*.0")
 })
+
+test_that("prepared data carries a class and prints its layout, not its rows", {
+  data <- data.frame(
+    id = rep(c("00001", "00002"), each = 2),
+    item = rep(c("q1", "q2"), 2),
+    score = c(1, 0, 1, 1)
+  )
+  prepared <- winsteps_prepare_person_data(
+    data, "id", "item", "score", item_order = c("q1", "q2")
+  )
+  expect_s3_class(prepared, "winsteps_person_data")
+
+  out <- capture.output(print(prepared))
+  expect_match(out[1], "2 persons x 2 items")
+  expect_true(any(grepl("NAMLEN=5", out)))
+  expect_true(any(grepl("ITEM1=7, NI=2", out)))
+  # the response block is summarised, not dumped in full
+  expect_lt(length(out), 12)
+})
+
+test_that("the printed layout tracks a multi-character delimiter", {
+  data <- data.frame(
+    id = rep("00001", 2), item = c("q1", "q2"), score = c(1, 0)
+  )
+  prepared <- winsteps_prepare_person_data(
+    data, "id", "item", "score", item_order = c("q1", "q2"), delimiter = "**"
+  )
+  out <- capture.output(print(prepared))
+  expect_true(any(grepl("Delimiter 6-7", out)))
+  expect_true(any(grepl("ITEM1=8", out)))
+})

@@ -43,7 +43,9 @@ explicitly is recommended so that the anchor file and data file stay
 in sync.}
 }
 \value{
-A list with:
+An object of class \code{winsteps_person_data}: a list with the
+elements below, which prints as a summary of the fixed-width layout
+rather than as the full response block.
 \describe{
 \item{lines}{Character vector, one fixed-format line per person.}
 \item{items}{Character vector of item names, in file column order.}
