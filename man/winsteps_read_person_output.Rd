@@ -25,10 +25,12 @@ holding nothing but its leading comment).
 }
 \description{
 Winsteps writes a one-line comment header followed by a whitespace-
-delimited table (\code{NAME}, \code{MEASURE}, \code{COUNT}, \code{SCORE}, ...). Column
-names are left exactly as Winsteps writes them; renaming to
-study-specific names (e.g. \code{RegID}, \code{winsteps_estimate}) is left to the
-caller, since those names are project-specific.
+delimited table (\code{ENTRY}, \code{MEASURE}, \code{COUNT}, \code{SCORE}, ..., \code{NAME}).
+Column names are left as Winsteps writes them, except that the leading
+\verb{;} Winsteps uses to comment out its own column-name line is stripped from
+the first name -- it arrives as \verb{;ENTRY} otherwise. Renaming to
+study-specific names (e.g. \code{RegID}) is left to the caller, since those
+names are project-specific.
 }
 \details{
 If Winsteps found no eligible persons to estimate, the PFILE will

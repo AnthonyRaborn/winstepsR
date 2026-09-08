@@ -18,6 +18,12 @@
 #'   Windows machine (see `run = FALSE` in [winsteps_estimate()]) is valid
 #'   there.
 #'
+#'   The batch file begins by changing to its own directory, since Winsteps
+#'   writes its output relative to wherever it was launched. That makes the
+#'   file self-locating: it can be run from any working directory, by
+#'   [winsteps_run()] or by double-clicking it, and still finds its control
+#'   file and leaves its output alongside itself.
+#'
 #' @return `file`, invisibly.
 #' @export
 winsteps_write_bat <- function(file,
@@ -36,21 +42,33 @@ winsteps_write_bat <- function(file,
   # otherwise picks its quoting style from the platform *writing* the file, so a
   # .bat generated on macOS/Linux (the documented `run = FALSE` handoff) would be
   # single-quoted and cmd.exe would read the quotes as part of the path.
-  line <- paste(
-    shQuote(winsteps_exe, type = "cmd"), "BATCH=YES",
-    shQuote(control_file, type = "cmd"), shQuote(out_file, type = "cmd"),
-    extra_args
+  lines <- c(
+    # Winsteps writes its output relative to the directory it is launched
+    # from, so the batch file moves there itself rather than making the caller
+    # do it. %~dp0 is the drive and path of this .bat; /d allows a drive
+    # change. This is what lets winsteps_run() avoid setwd(), which is
+    # process-global and would make concurrent runs clobber one another.
+    'cd /d "%~dp0"',
+    paste(
+      shQuote(winsteps_exe, type = "cmd"), "BATCH=YES",
+      shQuote(control_file, type = "cmd"), shQuote(out_file, type = "cmd"),
+      extra_args
+    )
   )
-  writeLines(line, con = file)
+  writeLines(lines, con = file)
   invisible(file)
 }
 
 #' Run a Winsteps batch file
 #'
-#' Runs a `.bat` file written by [winsteps_write_bat()] from its own
-#' directory (Winsteps writes its output files relative to the working
-#' directory it is launched from), then restores the previous working
-#' directory. Winsteps itself only runs on Windows.
+#' Runs a `.bat` file written by [winsteps_write_bat()]. That file changes to
+#' its own directory on the first line, so this function does not touch the R
+#' session's working directory and several runs can proceed concurrently
+#' without interfering with one another. Winsteps itself only runs on Windows.
+#'
+#' A hand-written `.bat` without that leading `cd` will resolve its control
+#' file and write its output relative to whatever the current directory
+#' happens to be.
 #'
 #' @param bat_file Path to the `.bat` file to run.
 #' @param wait Whether to block until Winsteps exits. Defaults to `TRUE`.
@@ -70,14 +88,15 @@ winsteps_run <- function(bat_file, wait = TRUE, error_on_failure = TRUE) {
     )
   }
   bat_file <- normalizePath(bat_file, mustWork = TRUE)
-  old_wd <- setwd(dirname(bat_file))
-  on.exit(setwd(old_wd), add = TRUE)
 
   # Called via do.call() rather than directly: shell() exists only in base R
   # on Windows, so a direct call is an undefined global everywhere else and
   # static analysis flags it. The platform guard above means this line is only
   # ever reached where shell() does exist.
-  status <- do.call("shell", list(basename(bat_file), wait = wait, intern = FALSE))
+  status <- do.call(
+    "shell",
+    list(shQuote(bat_file, type = "cmd"), wait = wait, intern = FALSE)
+  )
   if (isTRUE(error_on_failure) && isTRUE(wait)) {
     winsteps_stop_on_status(status, bat_file)
   }

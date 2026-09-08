@@ -38,6 +38,19 @@ cases into errors at the point the bad input arrives.
 * `IAFILE`/`IDFILE`/`PFILE` paths containing whitespace are quoted; paths
   without whitespace are written exactly as before.
 
+## Correctness (third pass, after verifying behaviour against Winsteps)
+
+* `winsteps_write_bat()` writes `cd /d "%~dp0"` as the batch file's first
+  line, so it changes to its own directory and can be run from anywhere.
+  `winsteps_run()` therefore no longer calls `setwd()`, which was
+  process-global and made concurrent runs -- one per exam, one per domain, the
+  case the `run_id` design exists for -- clobber one another's working
+  directory. A hand-written `.bat` without that leading `cd` will now resolve
+  its control file relative to the current directory instead.
+* `winsteps_read_person_output()` strips the leading `;` from the first column
+  name. Winsteps comments out its own column-name line, so the column
+  previously arrived as `` `;ENTRY` `` and needed backticks to reach.
+
 ## Correctness (second pass)
 
 * Anchor values and estimation keywords are written with an explicit

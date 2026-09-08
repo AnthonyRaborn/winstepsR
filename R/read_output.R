@@ -1,10 +1,12 @@
 #' Read a Winsteps person output file (PFILE) into a tibble
 #'
 #' Winsteps writes a one-line comment header followed by a whitespace-
-#' delimited table (`NAME`, `MEASURE`, `COUNT`, `SCORE`, ...). Column
-#' names are left exactly as Winsteps writes them; renaming to
-#' study-specific names (e.g. `RegID`, `winsteps_estimate`) is left to the
-#' caller, since those names are project-specific.
+#' delimited table (`ENTRY`, `MEASURE`, `COUNT`, `SCORE`, ..., `NAME`).
+#' Column names are left as Winsteps writes them, except that the leading
+#' `;` Winsteps uses to comment out its own column-name line is stripped from
+#' the first name -- it arrives as `;ENTRY` otherwise. Renaming to
+#' study-specific names (e.g. `RegID`) is left to the caller, since those
+#' names are project-specific.
 #'
 #' If Winsteps found no eligible persons to estimate, the PFILE will
 #' contain only the header line (or not exist at all, depending on how it
@@ -43,12 +45,18 @@ winsteps_read_person_output <- function(file, empty_ok = TRUE, col_types = NULL)
     stop("Winsteps output file has no data rows: ", file, call. = FALSE)
   }
   if (is.null(col_types)) {
-    col_names <- strsplit(trimws(head_lines[2]), "[[:space:]]+")[[1]]
+    col_names <- strsplit(trimws(sub("^;", "", head_lines[2])), "[[:space:]]+")[[1]]
     if ("NAME" %in% col_names) {
       col_types <- readr::cols(NAME = readr::col_character())
     }
   }
-  readr::read_table(file, skip = 1, show_col_types = FALSE, col_types = col_types)
+  out <- readr::read_table(file, skip = 1, show_col_types = FALSE,
+                           col_types = col_types)
+  # Winsteps marks its column-name line as a comment, so the leading ";" runs
+  # into the first name and the column arrives as `;ENTRY` -- awkward to reach
+  # without backticks, and not part of the name Winsteps means.
+  names(out) <- sub("^;", "", names(out))
+  out
 }
 
 #' Read a Winsteps batch table/report file

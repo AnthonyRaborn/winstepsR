@@ -41,4 +41,10 @@ Paths are quoted for \code{cmd.exe} regardless of the platform this
 function runs on, so a \code{.bat} generated on macOS or Linux and handed to a
 Windows machine (see \code{run = FALSE} in \code{\link[=winsteps_estimate]{winsteps_estimate()}}) is valid
 there.
+
+The batch file begins by changing to its own directory, since Winsteps
+writes its output relative to wherever it was launched. That makes the
+file self-locating: it can be run from any working directory, by
+\code{\link[=winsteps_run]{winsteps_run()}} or by double-clicking it, and still finds its control
+file and leaves its output alongside itself.
 }

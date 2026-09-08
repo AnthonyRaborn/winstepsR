@@ -93,13 +93,17 @@ test_that("winsteps_write_bat quotes for cmd.exe regardless of host platform", {
     out_file = "OUT.csv",
     winsteps_exe = "C:/Program Files/Winsteps/Winsteps.exe"
   )
-  line <- readLines(tmp)
+  lines <- readLines(tmp)
 
-  expect_match(line, '"C:/Program Files/Winsteps/Winsteps.exe"', fixed = TRUE)
-  expect_match(line, '"control.ctr"', fixed = TRUE)
-  expect_match(line, '"OUT.csv"', fixed = TRUE)
-  # no UNIX-style single quoting anywhere in the line
-  expect_false(grepl("'", line, fixed = TRUE))
+  # first line makes the batch file self-locating (W5)
+  expect_equal(lines[1], 'cd /d "%~dp0"')
+
+  cmd <- lines[2]
+  expect_match(cmd, '"C:/Program Files/Winsteps/Winsteps.exe"', fixed = TRUE)
+  expect_match(cmd, '"control.ctr"', fixed = TRUE)
+  expect_match(cmd, '"OUT.csv"', fixed = TRUE)
+  # no UNIX-style single quoting anywhere in the command
+  expect_false(grepl("'", cmd, fixed = TRUE))
 })
 
 test_that("a non-zero Winsteps exit status raises an error", {
@@ -318,4 +322,26 @@ test_that("a bad keep_items fails before any file is written", {
   )
   # nothing was left behind
   expect_false(dir.exists(file.path(wd, "r")))
+})
+
+test_that("the batch file is self-locating so runs do not depend on the cwd", {
+  # W5: verified on Windows. This is what lets winsteps_run() avoid setwd(),
+  # which is process-global and would make concurrent runs clobber each other.
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  winsteps_write_bat(tmp, "control.ctr", "OUT.csv", winsteps_exe = "W.exe")
+  lines <- readLines(tmp)
+
+  expect_length(lines, 2)
+  expect_equal(lines[1], 'cd /d "%~dp0"')
+  expect_match(lines[2], "BATCH=YES", fixed = TRUE)
+})
+
+test_that("winsteps_run does not change the session working directory", {
+  skip_on_os("windows")
+  before <- getwd()
+  # the platform guard fires before anything else, but the point is that no
+  # setwd() precedes it and none is left behind
+  expect_error(winsteps_run(tempfile()), "only works on Windows")
+  expect_equal(getwd(), before)
 })

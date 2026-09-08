@@ -158,3 +158,30 @@ test_that("col_types can be overridden by the caller", {
   )
   expect_type(out$MEASURE, "character")
 })
+
+test_that("the comment marker is stripped from the first column name", {
+  # Winsteps comments out its column-name line, so the leading ";" runs into
+  # the first name. Column set below is the real one from a Winsteps run.
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  writeLines(
+    c("; PERSON FILE",
+      paste(";ENTRY MEASURE ST COUNT SCORE MODLSE IN.MSQ INZSTD OUTMSQ OUTZST",
+            "DISPL PTMA WEIGHT OBSMA EXPMA PMA-E RMSR WMLE INDF OUTDF NAME"),
+      paste("1 0.72 1 3 2 1.25 0.73 -0.54 0.68 -0.56 0 0.87 1 66.7 66.6",
+            "0.5 0.4 0.7 1 1 001"),
+      paste("2 -0.72 1 3 1 1.25 1.09 0.35 1.05 0.27 0 0.00 1 66.7 66.6",
+            "0.5 0.4 0.7 1 1 002")),
+    tmp
+  )
+  out <- winsteps_read_person_output(tmp)
+
+  expect_equal(nrow(out), 2)
+  expect_equal(names(out)[1], "ENTRY")
+  expect_false(any(grepl("^;", names(out))))
+  expect_equal(out$ENTRY, c(1, 2))
+  # NAME is still pinned to character despite sitting last in a wide table
+  expect_type(out$NAME, "character")
+  expect_equal(out$NAME, c("001", "002"))
+  expect_equal(ncol(out), 21)
+})

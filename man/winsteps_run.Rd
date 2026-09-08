@@ -19,8 +19,13 @@ meaningful when \code{wait = TRUE}, since a status is not available otherwise.}
 The integer status code, invisibly.
 }
 \description{
-Runs a \code{.bat} file written by \code{\link[=winsteps_write_bat]{winsteps_write_bat()}} from its own
-directory (Winsteps writes its output files relative to the working
-directory it is launched from), then restores the previous working
-directory. Winsteps itself only runs on Windows.
+Runs a \code{.bat} file written by \code{\link[=winsteps_write_bat]{winsteps_write_bat()}}. That file changes to
+its own directory on the first line, so this function does not touch the R
+session's working directory and several runs can proceed concurrently
+without interfering with one another. Winsteps itself only runs on Windows.
+}
+\details{
+A hand-written \code{.bat} without that leading \code{cd} will resolve its control
+file and write its output relative to whatever the current directory
+happens to be.
 }
