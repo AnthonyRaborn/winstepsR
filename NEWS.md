@@ -39,6 +39,13 @@ errors.
 
 ## Validation
 
+* `winsteps_prepare_person_data()` warns when `data` contains items that
+  `item_order` does not list, naming them and counting the responses dropped.
+  Subsetting through `item_order` is supported and stays supported, but the
+  silent version of it is also what a mistyped item code or a form-version
+  mismatch looks like -- and those responses previously vanished with no
+  indication, leaving the person scored on fewer items than they answered.
+
 * Non-finite anchor values, zero-row response data, an empty `keep` set,
   duplicated item names, duplicated person-item rows, non-positive layout
   positions, `run_id` values containing path separators, and `control_args`

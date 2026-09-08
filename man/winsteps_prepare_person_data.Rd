@@ -37,7 +37,10 @@ between the ID field and the first item response. Defaults to \code{"*"}.}
 combination with no response. Defaults to \code{"."}.}
 
 \item{item_order}{Optional character vector giving the exact, ordered
-set of items to include (and their column order). \strong{Supply this.} If
+set of items to include (and their column order). Items in \code{data} that
+are not listed here are dropped, with a warning -- deliberate subsetting
+is supported, but the same thing happens when an item code is mistyped.
+\strong{Supply this.} If
 omitted, items appear in the order they are first encountered in \code{data}
 -- not sorted -- so reordering the input rows silently reorders the
 response columns, and sequence numbers then disagree with an anchor file

@@ -228,3 +228,49 @@ test_that("a non-numeric multi-byte score is coerced to missing, not written", {
   expect_equal(prepared$lines, "1*.0")
   expect_equal(length(charToRaw(prepared$lines)), 4L)
 })
+
+test_that("items in data but not in item_order are dropped with a warning", {
+  # Subsetting via item_order is supported, but silently discarding responses
+  # is also what a mistyped item code or a form-version mismatch looks like.
+  data <- data.frame(
+    id = rep("1", 3),
+    item = c("q01", "q02", "q99"),
+    score = c(1, 0, 1)
+  )
+  expect_warning(
+    prepared <- winsteps_prepare_person_data(
+      data, "id", "item", "score", item_order = c("q01", "q02")
+    ),
+    "not in item_order"
+  )
+  expect_warning(
+    winsteps_prepare_person_data(data, "id", "item", "score",
+                                 item_order = c("q01", "q02")),
+    "q99"
+  )
+  # the retained items are still written correctly
+  expect_equal(prepared$lines, "1*10")
+  expect_equal(prepared$n_items, 2)
+})
+
+test_that("the dropped-response count is reported, not just the item names", {
+  data <- data.frame(
+    id = rep(c("1", "2", "3"), each = 2),
+    item = rep(c("q01", "q99"), 3),
+    score = c(1, 1, 0, 1, 1, 0)
+  )
+  expect_warning(
+    winsteps_prepare_person_data(data, "id", "item", "score", item_order = "q01"),
+    "3 response\\(s\\) were dropped"
+  )
+})
+
+test_that("no warning when item_order covers every item in the data", {
+  data <- data.frame(
+    id = rep("1", 2), item = c("q01", "q02"), score = c(1, 0)
+  )
+  expect_no_warning(
+    winsteps_prepare_person_data(data, "id", "item", "score",
+                                 item_order = c("q01", "q02"))
+  )
+})

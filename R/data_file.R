@@ -26,7 +26,10 @@
 #' @param missing_code Single-character code written for a person-item
 #'   combination with no response. Defaults to `"."`.
 #' @param item_order Optional character vector giving the exact, ordered
-#'   set of items to include (and their column order). **Supply this.** If
+#'   set of items to include (and their column order). Items in `data` that
+#'   are not listed here are dropped, with a warning -- deliberate subsetting
+#'   is supported, but the same thing happens when an item code is mistyped.
+#'   **Supply this.** If
 #'   omitted, items appear in the order they are first encountered in `data`
 #'   -- not sorted -- so reordering the input rows silently reorders the
 #'   response columns, and sequence numbers then disagree with an anchor file
@@ -92,10 +95,24 @@ winsteps_prepare_person_data <- function(data,
     item_order <- setdiff(names(wide), "id")
   } else {
     check_items(item_order)
-    missing_items <- setdiff(item_order, setdiff(names(wide), "id"))
+    in_data <- setdiff(names(wide), "id")
+    missing_items <- setdiff(item_order, in_data)
     if (length(missing_items) > 0) {
       stop("item_order contains items not present in data: ",
            paste(missing_items, collapse = ", "), call. = FALSE)
+    }
+    # The reverse case is legitimate -- item_order is documented as the exact
+    # set to include, so subsetting is a supported use -- but it is also what
+    # a mistyped item code or a form-version mismatch looks like, and those
+    # responses would otherwise vanish without a trace.
+    dropped <- setdiff(in_data, item_order)
+    if (length(dropped) > 0) {
+      n_resp <- sum(!is.na(data[[item_col]]) & data[[item_col]] %in% dropped)
+      warning(length(dropped), " item(s) in data are not in item_order and ",
+              "their ", n_resp, " response(s) were dropped: ",
+              format_examples(dropped),
+              ". Pass them in item_order if they should be scored.",
+              call. = FALSE)
     }
   }
   wide <- wide[, c("id", item_order), drop = FALSE]
