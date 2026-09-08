@@ -228,7 +228,7 @@ in the anchor file as comments, so they have to be written as labels after
 `&END`. `winsteps_estimate()` now does that, which is what makes `result$items`
 joinable to the caller's items at all.
 
-### 1b. `winsteps_read_control_file()`
+### 1b. `winsteps_read_control_file()` -- **done**
 
 Parses an existing `.ctr` into the arguments `winsteps_write_control_file()`
 takes, so a team with an established Winsteps setup can bring their control
@@ -238,6 +238,18 @@ caller, so not urgent.
 A faithful round-trip is harder than `read.wcmd()` makes it look -- that
 implementation lowercases every value it reads, which corrupts file paths on a
 case-sensitive filesystem and any `TITLE=` text.
+
+Implemented and verified against the real control file in `inst/extdata`: it
+round-trips byte for byte. Values keep their case and their leading zeros
+(`CODES=01` stays two response codes, not the number 1), comments after `;`
+are discarded, quoted paths are unquoted, and `TFILE=*` blocks are collected.
+Any other `KEY=*` inline block is refused by name rather than mis-parsed, since
+guessing at one would produce a control file that looks right and is not.
+
+`ITEM=` is dropped, because the writer emits `ITEM=Item;` itself and returning
+it too would write the keyword twice; a different value warns instead of
+disappearing. If that ever needs to round-trip, the fix is to move `ITEM` into
+the writer's `default_estimation` rather than to special-case it here.
 
 ### 1c. Run metadata on `winsteps_result` -- **done**
 

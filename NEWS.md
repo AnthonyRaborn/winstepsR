@@ -82,6 +82,19 @@ cases into errors at the point the bad input arrives.
   shipped data file against what the writers produce, so the fixtures cannot
   drift from the package silently.
 
+## Reading control files
+
+* New `winsteps_read_control_file()` parses an existing `.ctr` into the
+  arguments `winsteps_write_control_file()` takes, so an established Winsteps
+  setup can be brought into R rather than rebuilt by hand. It round-trips the
+  package's own control files byte for byte.
+
+  Values keep their case and their leading zeros -- lowercasing corrupts paths
+  and `TITLE=` text, and coercing `CODES=01` to a number turns two response
+  codes into one. Comments after `;` are discarded, quoted paths unquoted, and
+  `TFILE=*` blocks collected; any other inline `KEY=*` block is refused by name
+  rather than mis-parsed.
+
 ## Item output
 
 * `winsteps_estimate()` writes the item names as control-file labels, so item
