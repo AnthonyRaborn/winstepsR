@@ -143,3 +143,46 @@ test_that("winsteps_estimate sets NAMLEN from the prepared ID width", {
   expect_true("NAMLEN=5;" %in% result$contents$control)
   expect_true("ITEM1=7;" %in% result$contents$control)
 })
+
+test_that("winsteps_estimate rejects a run_id that is not a plain directory name", {
+  # R1: run_id was interpolated into a path unchecked, so "../x" escaped
+  # working_dir entirely.
+  data <- data.frame(id = "1", item = "A", score = 1)
+  args <- list(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    items = "A", anchor_values = 0, run = FALSE, working_dir = tempfile()
+  )
+  for (bad in c("../escaped", "a/b", "..", "")) {
+    expect_error(
+      do.call(winsteps_estimate, c(args, list(run_id = bad))),
+      "run_id must be a single non-empty name"
+    )
+  }
+})
+
+test_that("control_args cannot silently collide with derived arguments", {
+  # R3: this used to fail with "formal argument matched by multiple actual
+  # arguments", which named neither control_args nor the fix.
+  data <- data.frame(id = "1", item = "A", score = 1)
+  expect_error(
+    winsteps_estimate(
+      data = data, id_col = "id", item_col = "item", score_col = "score",
+      items = "A", anchor_values = 0, run = FALSE,
+      working_dir = tempfile(), control_args = list(n_items = 999)
+    ),
+    "control_args cannot set argument\\(s\\).*n_items"
+  )
+})
+
+test_that("control_args still accepts arguments the wrapper does not derive", {
+  data <- data.frame(id = "1", item = "A", score = 1)
+  result <- winsteps_estimate(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    items = "A", anchor_values = 0, run = FALSE,
+    working_dir = tempfile(), winsteps_exe = "Winsteps.exe",
+    control_args = list(codes = "012", extra = "XWIDE=1;", tfile = "17.1")
+  )
+  expect_true("CODES=012;" %in% result$contents$control)
+  expect_true("XWIDE=1;" %in% result$contents$control)
+  expect_true("TFILE=*" %in% result$contents$control)
+})

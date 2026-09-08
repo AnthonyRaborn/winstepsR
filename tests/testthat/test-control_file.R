@@ -145,3 +145,27 @@ test_that("an explicit namlen still wins over the derived default", {
   winsteps_write_control_file(tmp, "d.dat", n_items = 2, item1 = 6, namlen = 4)
   expect_true("NAMLEN=4;" %in% readLines(tmp))
 })
+
+test_that("paths containing spaces are quoted, and paths without them are not", {
+  # R9: DATA= was quoted but IAFILE/IDFILE/PFILE were not, so a path with a
+  # space worked for one keyword and silently truncated for the others.
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  winsteps_write_control_file(
+    tmp, "my data.dat", n_items = 2, item1 = 5,
+    iafile = "my anchor.txt", idfile = "my delete.txt", pfile = "my person.out"
+  )
+  lines <- readLines(tmp)
+  expect_true('IAFILE="my anchor.txt";' %in% lines)
+  expect_true('IDFILE="my delete.txt";' %in% lines)
+  expect_true('PFILE="my person.out";' %in% lines)
+
+  # unchanged for ordinary paths
+  winsteps_write_control_file(
+    tmp, "data.dat", n_items = 2, item1 = 5,
+    iafile = "anchor.txt", pfile = "person.out"
+  )
+  lines <- readLines(tmp)
+  expect_true("IAFILE=anchor.txt;" %in% lines)
+  expect_true("PFILE=person.out;" %in% lines)
+})

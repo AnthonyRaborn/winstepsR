@@ -6,9 +6,12 @@
 #' anchored item difficulties, estimate person ability (optionally on a
 #' subset of items, e.g. one content domain) and return the result.
 #'
-#' Each call uses its own subdirectory of `working_dir` so that repeated
-#' calls (e.g. once per exam, once per domain) don't overwrite each
-#' other's intermediate files.
+#' Files for a call are written to the `run_id` subdirectory of
+#' `working_dir`, so calls with distinct `run_id`s (e.g. one per exam, one per
+#' domain) don't overwrite each other's intermediate files. Paths are
+#' deterministic rather than unique: two calls sharing a `run_id` and
+#' `working_dir` write to the same directory, and the second overwrites the
+#' first.
 #'
 #' @param data Long-format response data; see [winsteps_prepare_person_data()].
 #' @param id_col,item_col,score_col Column names in `data`; see
@@ -20,14 +23,18 @@
 #' @param keep_items Optional character vector of items to estimate on
 #'   (e.g. one domain's items); every other item in `items` is excluded
 #'   via an `IDFILE`. If `NULL` (default), all items are used.
-#' @param run_id A short, filesystem-safe label for this run, used to
-#'   namespace files within `working_dir` (e.g. `"exam1"`,
-#'   `"exam1_domain2"`). Defaults to `"winsteps_run"`.
+#' @param run_id A short label for this run, used as a subdirectory name
+#'   within `working_dir` (e.g. `"exam1"`, `"exam1_domain2"`). Must contain no
+#'   path separators. Give concurrent or repeated runs distinct values --
+#'   reusing one overwrites the earlier run's files. Defaults to
+#'   `"winsteps_run"`.
 #' @param working_dir Directory under which a `run_id` subdirectory is
 #'   created for this run's files. Defaults to a temp directory.
 #' @param control_args Named list of extra arguments passed through to
 #'   [winsteps_write_control_file()] (e.g. `estimation`, `codes`,
-#'   `extra`). Use `control_args$tfile` (e.g. `tfile = "17.1"`) to request
+#'   `extra`). Cannot include arguments this function derives itself
+#'   (`file`, `data_file`, `n_items`, `item1`, `namlen`, `iafile`, `idfile`,
+#'   `pfile`). Use `control_args$tfile` (e.g. `tfile = "17.1"`) to request
 #'   specific Winsteps tables; their output is written to `report_file`
 #'   and read back into `contents$report` (see below).
 #' @param winsteps_exe Passed through to [winsteps_write_bat()].
@@ -68,6 +75,24 @@ winsteps_estimate <- function(data,
                                control_args = list(),
                                winsteps_exe = getOption("winstepsR.exe_path"),
                                run = TRUE) {
+  if (length(run_id) != 1 || is.na(run_id) || !nzchar(run_id) ||
+      grepl("[/\\\\]", run_id) || run_id %in% c(".", "..")) {
+    stop("run_id must be a single non-empty name with no path separators, ",
+         "since it names a subdirectory of working_dir; got: ",
+         paste(format(run_id), collapse = ", "), call. = FALSE)
+  }
+
+  reserved <- intersect(
+    names(control_args),
+    c("file", "data_file", "n_items", "item1", "namlen", "iafile", "idfile", "pfile")
+  )
+  if (length(reserved) > 0) {
+    stop("control_args cannot set argument(s) that winsteps_estimate() ",
+         "derives itself: ", paste(reserved, collapse = ", "),
+         ". Call winsteps_write_control_file() directly if you need control ",
+         "over these.", call. = FALSE)
+  }
+
   run_dir <- file.path(working_dir, run_id)
   dir.create(run_dir, recursive = TRUE, showWarnings = FALSE)
 

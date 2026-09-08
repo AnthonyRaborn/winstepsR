@@ -115,3 +115,13 @@ test_that("prepare_person_data rejects a duplicated item_order", {
     "items must be unique"
   )
 })
+
+test_that("write_person_data rejects anything that is not prepared output", {
+  # R10: any list with a `lines` element used to reach writeLines().
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  expect_error(winsteps_write_person_data(list(lines = c(1, 2)), tmp),
+               "character `lines` element")
+  expect_error(winsteps_write_person_data("not a list", tmp),
+               "winsteps_prepare_person_data")
+})

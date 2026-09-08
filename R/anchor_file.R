@@ -94,6 +94,15 @@ winsteps_check_items <- function(items) {
   if (length(items) == 0) {
     stop("items is empty", call. = FALSE)
   }
+  # Item names are written into tab-delimited files after a ";" comment
+  # marker, so either character would silently restructure the line.
+  structural <- grepl("[\t;]", items)
+  if (any(structural)) {
+    stop("item names must not contain tabs or semicolons, which delimit the ",
+         "anchor and subset files; offending item(s): ",
+         paste(utils::head(items[structural], 5), collapse = ", "),
+         if (sum(structural) > 5) ", ..." else "", call. = FALSE)
+  }
   dupes <- unique(items[duplicated(items)])
   if (length(dupes) > 0) {
     stop("items must be unique; duplicated: ",

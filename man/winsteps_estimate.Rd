@@ -35,16 +35,20 @@ shared with \code{anchor_values} (and with \code{keep_items}, if used).}
 (e.g. one domain's items); every other item in \code{items} is excluded
 via an \code{IDFILE}. If \code{NULL} (default), all items are used.}
 
-\item{run_id}{A short, filesystem-safe label for this run, used to
-namespace files within \code{working_dir} (e.g. \code{"exam1"},
-\code{"exam1_domain2"}). Defaults to \code{"winsteps_run"}.}
+\item{run_id}{A short label for this run, used as a subdirectory name
+within \code{working_dir} (e.g. \code{"exam1"}, \code{"exam1_domain2"}). Must contain no
+path separators. Give concurrent or repeated runs distinct values --
+reusing one overwrites the earlier run's files. Defaults to
+\code{"winsteps_run"}.}
 
 \item{working_dir}{Directory under which a \code{run_id} subdirectory is
 created for this run's files. Defaults to a temp directory.}
 
 \item{control_args}{Named list of extra arguments passed through to
 \code{\link[=winsteps_write_control_file]{winsteps_write_control_file()}} (e.g. \code{estimation}, \code{codes},
-\code{extra}). Use \code{control_args$tfile} (e.g. \code{tfile = "17.1"}) to request
+\code{extra}). Cannot include arguments this function derives itself
+(\code{file}, \code{data_file}, \code{n_items}, \code{item1}, \code{namlen}, \code{iafile}, \code{idfile},
+\code{pfile}). Use \code{control_args$tfile} (e.g. \code{tfile = "17.1"}) to request
 specific Winsteps tables; their output is written to \code{report_file}
 and read back into \code{contents$report} (see below).}
 
@@ -77,9 +81,12 @@ anchored item difficulties, estimate person ability (optionally on a
 subset of items, e.g. one content domain) and return the result.
 }
 \details{
-Each call uses its own subdirectory of \code{working_dir} so that repeated
-calls (e.g. once per exam, once per domain) don't overwrite each
-other's intermediate files.
+Files for a call are written to the \code{run_id} subdirectory of
+\code{working_dir}, so calls with distinct \code{run_id}s (e.g. one per exam, one per
+domain) don't overwrite each other's intermediate files. Paths are
+deterministic rather than unique: two calls sharing a \code{run_id} and
+\code{working_dir} write to the same directory, and the second overwrites the
+first.
 
 When \code{run = TRUE}, a failed Winsteps run raises an error rather
 than returning an empty result: a non-zero exit status errors via

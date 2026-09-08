@@ -148,6 +148,10 @@ winsteps_prepare_person_data <- function(data,
 #' @param file Path to write the Winsteps `DATA=` file to.
 #' @export
 winsteps_write_person_data <- function(prepared, file) {
+  if (!is.list(prepared) || !is.character(prepared$lines)) {
+    stop("prepared must be the list returned by winsteps_prepare_person_data(), ",
+         "with a character `lines` element", call. = FALSE)
+  }
   writeLines(prepared$lines, con = file)
   invisible(file)
 }

@@ -88,6 +88,12 @@ winsteps_write_control_file <- function(file,
     stop("item_labels must have length n_items (", n_items, ")", call. = FALSE)
   }
 
+  # Winsteps splits an unquoted value at whitespace, so a path containing a
+  # space needs quoting; paths without one are left exactly as before.
+  quote_if_needed <- function(x) {
+    if (grepl("[[:space:]]", x) && !grepl('^".*"$', x)) paste0('"', x, '"') else x
+  }
+
   fmt <- function(x) {
     if (is.numeric(x)) format(x, scientific = FALSE, trim = TRUE) else as.character(x)
   }
@@ -101,9 +107,12 @@ winsteps_write_control_file <- function(file,
   )
   estimation <- utils::modifyList(default_estimation, estimation)
 
+  # DATA= is always quoted (that form is known to work); the rest are quoted
+  # only when the path actually needs it, so control files that work today are
+  # written byte-for-byte as they were.
   lines <- character(0)
-  if (!is.null(iafile)) lines <- c(lines, paste0("IAFILE=", iafile, ";"))
-  if (!is.null(idfile)) lines <- c(lines, paste0("IDFILE=", idfile, ";"))
+  if (!is.null(iafile)) lines <- c(lines, paste0("IAFILE=", quote_if_needed(iafile), ";"))
+  if (!is.null(idfile)) lines <- c(lines, paste0("IDFILE=", quote_if_needed(idfile), ";"))
 
   estimation <- estimation[!vapply(estimation, is.null, logical(1))]
   if (length(estimation) > 0) {
@@ -128,7 +137,7 @@ winsteps_write_control_file <- function(file,
     "ITEM=Item;",
     paste0("ITEM1=", item1, ";"),
     paste0("NI=", n_items, ";"),
-    paste0("PFILE=", pfile, ";"),
+    paste0("PFILE=", quote_if_needed(pfile), ";"),
     extra,
     "&END"
   )

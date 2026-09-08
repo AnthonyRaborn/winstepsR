@@ -73,3 +73,17 @@ test_that("write_item_subset_file rejects an empty keep set", {
     "would delete every item"
   )
 })
+
+test_that("item names containing the file's own delimiters are rejected", {
+  # R9: a tab or semicolon in an item name restructured the anchor file line.
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  expect_error(
+    winsteps_write_anchor_file(c("A\tB", "C"), c(1, 2), tmp),
+    "must not contain tabs or semicolons"
+  )
+  expect_error(
+    winsteps_write_anchor_file(c("A;B", "C"), c(1, 2), tmp),
+    "must not contain tabs or semicolons"
+  )
+})
