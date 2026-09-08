@@ -133,7 +133,7 @@ read_winsteps_table <- function(file, empty_ok, col_types, what) {
 #'   report instead of raising an error.
 #'
 #' @return A `winsteps_report`: the raw lines of the report file, as a
-#'   character vector with a class attached so that printing it summarises
+#'   character vector with a class attached so that printing it summarizes
 #'   the tables it contains rather than echoing every line. It inherits from
 #'   `character`, so it can be used anywhere a character vector can --
 #'   `grepl()`, `writeLines()`, `length()` and subsetting all behave as

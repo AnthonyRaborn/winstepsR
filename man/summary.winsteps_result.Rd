@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.R
 \name{summary.winsteps_result}
 \alias{summary.winsteps_result}
-\title{Summarise the person measures from a Winsteps run}
+\title{Summarize the person measures from a Winsteps run}
 \usage{
 \method{summary}{winsteps_result}(object, ...)
 }
@@ -51,7 +51,7 @@ result <- winsteps_estimate(
   winsteps_exe = "Winsteps.exe", run = FALSE
 )
 
-# There is nothing to summarise until Winsteps has run; after a real run
+# There is nothing to summarize until Winsteps has run; after a real run
 # this reports the measure and model-SE distributions.
 summary(result)
 

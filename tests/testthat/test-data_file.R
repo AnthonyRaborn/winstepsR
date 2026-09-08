@@ -168,7 +168,7 @@ test_that("prepared data carries a class and prints its layout, not its rows", {
   expect_match(out[1], "2 persons x 2 items")
   expect_true(any(grepl("NAMLEN=5", out)))
   expect_true(any(grepl("ITEM1=7, NI=2", out)))
-  # the response block is summarised, not dumped in full
+  # the response block is summarized, not dumped in full
   expect_lt(length(out), 12)
 })
 

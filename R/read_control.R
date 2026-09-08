@@ -15,7 +15,7 @@
 #' text, and coercing `CODES=01` to a number turns two valid response codes
 #' into one.
 #'
-#' @section What is recognised:
+#' @section What is recognized:
 #'
 #' Keywords with a dedicated argument (`DATA`, `NI`, `ITEM1`, `NAME1`,
 #' `NAMLEN`, `CODES`, `IAFILE`, `IDFILE`, `PFILE`, `IFILE`, `TFILE`) are

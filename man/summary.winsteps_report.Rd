@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.R
 \name{summary.winsteps_report}
 \alias{summary.winsteps_report}
-\title{Summarise the tables in a Winsteps batch report}
+\title{Summarize the tables in a Winsteps batch report}
 \usage{
 \method{summary}{winsteps_report}(object, ...)
 }
@@ -17,7 +17,7 @@ number, the \code{start} line and how many \code{lines} it runs to. Zero rows if
 report holds no \code{TABLE} headings.
 }
 \description{
-Summarise the tables in a Winsteps batch report
+Summarize the tables in a Winsteps batch report
 }
 \examples{
 f <- system.file("extdata", "example_full_report.csv", package = "winstepsR")

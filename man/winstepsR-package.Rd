@@ -21,6 +21,14 @@ Set the Winsteps executable path once per session with
 \verb{winsteps_write_*()}, \code{\link[=winsteps_run]{winsteps_run()}} and \verb{winsteps_read_*()} functions
 are the building blocks it composes, and can be used directly.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/AnthonyRaborn/winstepsR}
+  \item Report bugs at \url{https://github.com/AnthonyRaborn/winstepsR/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Anthony Raborn \email{anthony@raborndecisionsciences.com}
 

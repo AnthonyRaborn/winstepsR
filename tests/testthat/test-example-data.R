@@ -169,7 +169,7 @@ test_that("the full-run person output covers every score from zero to perfect", 
   expect_true(any(persons$COUNT < 12))
 })
 
-test_that("a real Winsteps batch report is recognised as a table", {
+test_that("a real Winsteps batch report is recognized as a table", {
   # The only real TFILE= output available. Its heading line is partly
   # overwritten by Winsteps -- "...Rtmpuk OUT.csvs Sep 08 2026 12:29mple_full\\c"
   # -- so it also exercises table detection against a mangled header.
@@ -186,7 +186,7 @@ test_that("a real Winsteps batch report is recognised as a table", {
   expect_equal(tables$start, 1L)
   expect_equal(tables$lines, 215L)
 
-  # 215 lines summarise to a handful
+  # 215 lines summarize to a handful
   out <- capture.output(print(report))
   expect_match(out[1], "215 lines from 1 table")
   expect_lt(length(out), 10)

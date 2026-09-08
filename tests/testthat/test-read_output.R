@@ -58,7 +58,7 @@ test_that("a winsteps_report behaves as a character vector", {
   expect_equal(readLines(tmp2), lines)
 })
 
-test_that("printing a report summarises its tables instead of echoing them", {
+test_that("printing a report summarizes its tables instead of echoing them", {
   tmp <- tempfile()
   on.exit(unlink(tmp))
   writeLines(

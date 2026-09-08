@@ -188,7 +188,7 @@ items[, c("ENTRY", "NAME", "MEASURE", "DISPL")]
 `MEASURE` is the value that was supplied, unchanged. `DISPL` -- displacement --
 is how far the data would have moved it. A run whose anchor file was ignored
 completes normally and returns plausible measures; displacement is the evidence
-that it was not ignored. What counts as too much displacement is a judgement
+that it was not ignored. What counts as too much displacement is a judgment
 this package does not make for you.
 
 ```{r}

@@ -14,7 +14,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 winstepsR is the mechanical half of an R--Winsteps workflow: it writes the files
 Winsteps needs, runs it, and reads the results back. It implements no scoring
 rules of its own -- scale-score conversions, pass marks, domain definitions and
-the like stay in your project, because they are specific to your programme.
+the like stay in your project, because they are specific to your program.
 
 ```{r setup}
 library(winstepsR)
@@ -113,7 +113,7 @@ which is worth understanding before the measures are used.
 
 **Look at the distribution.** `summary()` reports it and nothing more; no fit
 flags, no cut-offs, because every cut-off is a decision belonging to your
-programme:
+program:
 
 ```{r}
 c(mean = mean(measures$MEASURE), sd = stats::sd(measures$MEASURE))

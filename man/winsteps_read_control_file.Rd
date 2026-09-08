@@ -29,7 +29,7 @@ value corrupts file paths on a case-sensitive filesystem and any \verb{TITLE=}
 text, and coercing \code{CODES=01} to a number turns two valid response codes
 into one.
 }
-\section{What is recognised}{
+\section{What is recognized}{
 
 
 Keywords with a dedicated argument (\code{DATA}, \code{NI}, \code{ITEM1}, \code{NAME1},

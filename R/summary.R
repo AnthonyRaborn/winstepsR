@@ -1,4 +1,4 @@
-#' Summarise the person measures from a Winsteps run
+#' Summarize the person measures from a Winsteps run
 #'
 #' Reports the distribution of the estimated person measures and nothing more.
 #' There are deliberately no fit flags, no "extreme" or "misfitting" counts and
@@ -41,7 +41,7 @@
 #'   winsteps_exe = "Winsteps.exe", run = FALSE
 #' )
 #'
-#' # There is nothing to summarise until Winsteps has run; after a real run
+#' # There is nothing to summarize until Winsteps has run; after a real run
 #' # this reports the measure and model-SE distributions.
 #' summary(result)
 #'
@@ -90,7 +90,7 @@ print.summary.winsteps_result <- function(x, ...) {
   num <- function(v, digits = 2) formatC(v, format = "f", digits = digits)
 
   if (!isTRUE(x$ran)) {
-    field("Winsteps", "not run - no measures to summarise")
+    field("Winsteps", "not run - no measures to summarize")
     return(invisible(x))
   }
   field("Persons", paste(x$n, "measured"))
@@ -117,7 +117,7 @@ print.summary.winsteps_result <- function(x, ...) {
   invisible(x)
 }
 
-#' Summarise the tables in a Winsteps batch report
+#' Summarize the tables in a Winsteps batch report
 #'
 #' @param object A [winsteps_read_report()] result.
 #' @param ... Ignored.

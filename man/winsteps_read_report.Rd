@@ -14,7 +14,7 @@ report instead of raising an error.}
 }
 \value{
 A \code{winsteps_report}: the raw lines of the report file, as a
-character vector with a class attached so that printing it summarises
+character vector with a class attached so that printing it summarizes
 the tables it contains rather than echoing every line. It inherits from
 \code{character}, so it can be used anywhere a character vector can --
 \code{grepl()}, \code{writeLines()}, \code{length()} and subsetting all behave as

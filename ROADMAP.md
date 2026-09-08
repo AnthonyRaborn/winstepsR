@@ -62,7 +62,7 @@ clean:
 
 | `NAMLEN` | `winsteps_read_person_output(...)$NAME` |
 |---|---|
-| 4 (derived, pre-fix behaviour) | `"001*" "002*"` |
+| 4 (derived, pre-fix behavior) | `"001*" "002*"` |
 | 3 (`delimiter_width = 2`) | `"001" "002"` |
 
 C4 was real, and 1dd4d60 fixes it.
@@ -383,7 +383,7 @@ Also done:
   IFILE raises, and a successful run populates `$results`, `$items`,
   `$contents` and `winsteps_elapsed`.
 
-  What that proves is this package's plumbing, not Winsteps' behaviour — those
+  What that proves is this package's plumbing, not Winsteps' behavior — those
   stay separate claims, and the second is what the W-probes settled.
 
   These tests skip everywhere except Windows, so their first real execution

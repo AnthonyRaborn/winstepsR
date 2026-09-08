@@ -18,6 +18,7 @@ SystemRequirements: Winsteps (<https://www.winsteps.com/index.htm>), which is
     licensed separately and runs on Windows only. Generating input files and
     reading output works on any platform; winsteps_run() does not.
 Encoding: UTF-8
+Language: en-US
 Roxygen: list(markdown = TRUE)
 Depends:
     R (>= 4.1)

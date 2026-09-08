@@ -1,6 +1,6 @@
 # winstepsR 0.2.0
 
-Fixes from a full review of 0.1.0, with the behaviour of every change verified
+Fixes from a full review of 0.1.0, with the behavior of every change verified
 against a real Winsteps installation. The theme is that the package used to
 write files Winsteps would accept and silently misread; most changes turn those
 cases into errors at the point the bad input arrives.
@@ -48,7 +48,7 @@ errors.
 * `IAFILE`/`IDFILE`/`PFILE` paths containing whitespace are quoted; paths
   without whitespace are written exactly as before.
 
-## Correctness (third pass, after verifying behaviour against Winsteps)
+## Correctness (third pass, after verifying behavior against Winsteps)
 
 * `winsteps_write_bat()` writes `cd /d "%~dp0"` as the batch file's first
   line, so it changes to its own directory and can be run from anywhere.
