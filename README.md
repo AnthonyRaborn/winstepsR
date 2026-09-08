@@ -39,8 +39,14 @@ responses <- data.frame(
   score     = c(1, 0, 1, 1)
 )
 
-items <- c("q1", "q2")
-anchor_b <- c(-0.4, 0.6)  # e.g. IRT b-parameters, already calibrated elsewhere
+# Item names paired with their anchor values (e.g. IRT b-parameters,
+# already calibrated elsewhere). Sequence number is position, so keeping the
+# two vectors in one object stops them drifting out of order, and validates
+# them once here rather than at every writer.
+anchors <- winsteps_anchors(
+  items  = c("q1", "q2"),
+  values = c(-0.4, 0.6)
+)
 
 # Point winstepsR at your local Winsteps.exe once per session/project:
 options(winstepsR.exe_path = "C:/Winsteps/Winsteps.exe")
@@ -48,7 +54,7 @@ options(winstepsR.exe_path = "C:/Winsteps/Winsteps.exe")
 result <- winsteps_estimate(
   data = responses,
   id_col = "person_id", item_col = "item", score_col = "score",
-  items = items, anchor_values = anchor_b,
+  anchors = anchors,
   run_id = "example_run"
 )
 
@@ -95,7 +101,7 @@ under `working_dir` and isn't guaranteed to persist):
 ```r
 result <- winsteps_estimate(
   data = responses, id_col = "person_id", item_col = "item", score_col = "score",
-  items = items, anchor_values = anchor_b,
+  anchors = anchors,
   control_args = list(tfile = "17.1"),
   run_id = "example_run"
 )
@@ -163,7 +169,7 @@ pass `keep_items`:
 ```r
 winsteps_estimate(
   data = responses, id_col = "person_id", item_col = "item", score_col = "score",
-  items = items, anchor_values = anchor_b,
+  anchors = anchors,
   keep_items = c("q1"),          # every other item is excluded via IDFILE
   run_id = "example_domain1_run"
 )
@@ -180,6 +186,10 @@ each of which can be used independently for more custom workflows:
 
 - `winsteps_prepare_person_data()` / `winsteps_write_person_data()` — reshape
   long-format responses into Winsteps' fixed-format data file.
+- `winsteps_anchors()` — pair item names with anchor values in one object, so
+  the shared ordering the anchor, delete and data files all depend on is
+  structural rather than something each call has to keep straight. Both
+  writers below accept either it or the two bare vectors.
 - `winsteps_write_anchor_file()` — write an IAFILE of anchored item values.
 - `winsteps_write_item_subset_file()` — write an IDFILE excluding items not
   in a given "keep" set (used for domain/subset scoring).

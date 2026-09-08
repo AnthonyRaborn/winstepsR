@@ -2,17 +2,26 @@
 % Please edit documentation in R/anchor_file.R
 \name{winsteps_write_item_subset_file}
 \alias{winsteps_write_item_subset_file}
+\alias{winsteps_write_item_subset_file.winsteps_anchors}
+\alias{winsteps_write_item_subset_file.default}
 \title{Write a Winsteps item-subset (delete) file (IDFILE)}
 \usage{
-winsteps_write_item_subset_file(items, keep, file)
+winsteps_write_item_subset_file(x, ...)
+
+\method{winsteps_write_item_subset_file}{winsteps_anchors}(x, keep, file, ...)
+
+\method{winsteps_write_item_subset_file}{default}(x, keep, file, ...)
 }
 \arguments{
-\item{items}{Character vector of all item names, in the same order as
-the anchor/data files (i.e. sequence number = position in \code{items}).}
+\item{x}{Either a \code{\link[=winsteps_anchors]{winsteps_anchors()}} object, or a character vector of
+all item names in the same order as the anchor/data files (i.e. sequence
+number = position).}
+
+\item{...}{Passed between methods.}
 
 \item{keep}{Character vector of item names to \emph{retain} for this
-estimation run; every other item in \code{items} is written to the delete
-file. Must be non-empty.}
+estimation run; every other item is written to the delete file. Must be
+non-empty.}
 
 \item{file}{Path to write the delete file to.}
 }

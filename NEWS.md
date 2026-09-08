@@ -40,6 +40,17 @@ cases into errors at the point the bad input arrives.
 
 ## Structure
 
+* New `winsteps_anchors()` pairs item names with their anchor values in one
+  object. Sequence number is position, so the anchor file, delete file and
+  data file all depend on those two vectors staying in the same order -- an
+  invariant previously stated in five doc blocks and enforced nowhere.
+  Duplicated names, delimiter characters in names, mismatched lengths and
+  non-finite values are now caught once, when the bank is built, rather than
+  at each writer. `winsteps_write_anchor_file()` and
+  `winsteps_write_item_subset_file()` are generic and take either the object
+  or the bare vectors; `winsteps_estimate()` gains an `anchors` argument
+  alongside `items`/`anchor_values`, and validates `keep_items` before it
+  writes anything.
 * Validation moved into a shared internal vocabulary (`R/validate.R`), so each
   exported function opens with a short list of what it refuses instead of
   inline error construction. `winsteps_prepare_person_data()` is about half its

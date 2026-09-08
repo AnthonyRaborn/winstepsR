@@ -267,3 +267,55 @@ test_that("the printed summary reports measures when Winsteps has run", {
   expect_true(any(grepl("\\$results   tibble 40 x 2", out)))
   expect_true(any(grepl("person, report", out)))
 })
+
+test_that("winsteps_estimate accepts an anchors object equivalently", {
+  data <- data.frame(
+    id = rep(c("00001", "00002"), each = 3),
+    item = rep(c("q1", "q2", "q3"), 2),
+    score = c(1, 0, 1, 0, 1, 1)
+  )
+  args <- list(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    run_id = "r", winsteps_exe = "Winsteps.exe", run = FALSE
+  )
+  by_vectors <- do.call(winsteps_estimate, c(args, list(
+    items = c("q1", "q2", "q3"), anchor_values = c(-0.4, 0.1, 0.6),
+    working_dir = tempfile()
+  )))
+  by_object <- do.call(winsteps_estimate, c(args, list(
+    anchors = winsteps_anchors(c("q1", "q2", "q3"), c(-0.4, 0.1, 0.6)),
+    working_dir = tempfile()
+  )))
+
+  expect_equal(by_vectors$contents$anchor, by_object$contents$anchor)
+  expect_equal(by_vectors$contents$control, by_object$contents$control)
+  expect_equal(by_vectors$contents$data, by_object$contents$data)
+})
+
+test_that("winsteps_estimate rejects supplying anchors both ways", {
+  data <- data.frame(id = "1", item = "q1", score = 1)
+  expect_error(
+    winsteps_estimate(
+      data = data, id_col = "id", item_col = "item", score_col = "score",
+      items = "q1", anchor_values = 0,
+      anchors = winsteps_anchors("q1", 0),
+      working_dir = tempfile(), run = FALSE
+    ),
+    "not both"
+  )
+})
+
+test_that("a bad keep_items fails before any file is written", {
+  data <- data.frame(id = "1", item = "q1", score = 1)
+  wd <- tempfile()
+  expect_error(
+    winsteps_estimate(
+      data = data, id_col = "id", item_col = "item", score_col = "score",
+      anchors = winsteps_anchors(c("q1", "q2"), c(0, 1)),
+      keep_items = "nope", run_id = "r", working_dir = wd, run = FALSE
+    ),
+    "not present in items"
+  )
+  # nothing was left behind
+  expect_false(dir.exists(file.path(wd, "r")))
+})

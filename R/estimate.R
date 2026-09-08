@@ -17,9 +17,14 @@
 #' @param id_col,item_col,score_col Column names in `data`; see
 #'   [winsteps_prepare_person_data()].
 #' @param items Character vector of all item names, in a fixed order
-#'   shared with `anchor_values` (and with `keep_items`, if used).
+#'   shared with `anchor_values` (and with `keep_items`, if used). Supply
+#'   this and `anchor_values`, or `anchors` -- not both.
 #' @param anchor_values Numeric vector of anchor values, same order as
 #'   `items`.
+#' @param anchors A [winsteps_anchors()] object, as an alternative to the
+#'   `items`/`anchor_values` pair. Preferred for anything beyond a one-off
+#'   call, since it keeps the two vectors from drifting out of order and
+#'   validates them once at construction.
 #' @param keep_items Optional character vector of items to estimate on
 #'   (e.g. one domain's items); every other item in `items` is excluded
 #'   via an `IDFILE`. If `NULL` (default), all items are used.
@@ -61,7 +66,7 @@
 #' result <- winsteps_estimate(
 #'   data = responses,
 #'   id_col = "person_id", item_col = "item", score_col = "score",
-#'   items = c("q1", "q2"), anchor_values = c(-0.4, 0.6),
+#'   anchors = winsteps_anchors(c("q1", "q2"), c(-0.4, 0.6)),
 #'   run_id = "example_run", winsteps_exe = "Winsteps.exe", run = FALSE
 #' )
 #' result$contents$control
@@ -87,14 +92,21 @@ winsteps_estimate <- function(data,
                                id_col,
                                item_col,
                                score_col,
-                               items,
-                               anchor_values,
+                               items = NULL,
+                               anchor_values = NULL,
+                               anchors = NULL,
                                keep_items = NULL,
                                run_id = "winsteps_run",
                                working_dir = tempdir(),
                                control_args = list(),
                                winsteps_exe = getOption("winstepsR.exe_path"),
                                run = TRUE) {
+  anchors <- resolve_anchors(anchors, items, anchor_values)
+  items <- anchors$items
+  # Checked before anything is written, so a bad domain filter fails without
+  # leaving a half-populated run directory behind.
+  if (!is.null(keep_items)) check_keep(keep_items, items)
+
   check_run_id(run_id)
   check_no_reserved_args(
     control_args,
@@ -112,9 +124,9 @@ winsteps_estimate <- function(data,
   paths <- winsteps_run_paths(run_dir, subset = !is.null(keep_items))
 
   winsteps_write_person_data(prepared, paths$data_file)
-  winsteps_write_anchor_file(items, anchor_values, paths$anchor_file)
+  winsteps_write_anchor_file(anchors, file = paths$anchor_file)
   if (!is.null(paths$delete_file)) {
-    winsteps_write_item_subset_file(items, keep = keep_items, file = paths$delete_file)
+    winsteps_write_item_subset_file(anchors, keep = keep_items, file = paths$delete_file)
   }
 
   do.call(winsteps_write_control_file, c(

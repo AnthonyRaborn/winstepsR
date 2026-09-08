@@ -9,8 +9,9 @@ winsteps_estimate(
   id_col,
   item_col,
   score_col,
-  items,
-  anchor_values,
+  items = NULL,
+  anchor_values = NULL,
+  anchors = NULL,
   keep_items = NULL,
   run_id = "winsteps_run",
   working_dir = tempdir(),
@@ -26,10 +27,16 @@ winsteps_estimate(
 \code{\link[=winsteps_prepare_person_data]{winsteps_prepare_person_data()}}.}
 
 \item{items}{Character vector of all item names, in a fixed order
-shared with \code{anchor_values} (and with \code{keep_items}, if used).}
+shared with \code{anchor_values} (and with \code{keep_items}, if used). Supply
+this and \code{anchor_values}, or \code{anchors} -- not both.}
 
 \item{anchor_values}{Numeric vector of anchor values, same order as
 \code{items}.}
+
+\item{anchors}{A \code{\link[=winsteps_anchors]{winsteps_anchors()}} object, as an alternative to the
+\code{items}/\code{anchor_values} pair. Preferred for anything beyond a one-off
+call, since it keeps the two vectors from drifting out of order and
+validates them once at construction.}
 
 \item{keep_items}{Optional character vector of items to estimate on
 (e.g. one domain's items); every other item in \code{items} is excluded
@@ -110,7 +117,7 @@ responses <- data.frame(
 result <- winsteps_estimate(
   data = responses,
   id_col = "person_id", item_col = "item", score_col = "score",
-  items = c("q1", "q2"), anchor_values = c(-0.4, 0.6),
+  anchors = winsteps_anchors(c("q1", "q2"), c(-0.4, 0.6)),
   run_id = "example_run", winsteps_exe = "Winsteps.exe", run = FALSE
 )
 result$contents$control
