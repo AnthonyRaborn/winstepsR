@@ -199,6 +199,12 @@ each of which can be used independently for more custom workflows:
   platform Winsteps itself runs on.
 - `winsteps_read_person_output()` — read a PFILE into a tibble, handling the
   empty-output case.
+- `winsteps_read_item_output()` — read an IFILE into a tibble. Worth doing even
+  on a pure anchored run: its displacement column is the evidence that the
+  anchors were applied rather than quietly re-estimated.
+- `winsteps_read_control_file()` — parse an existing `.ctr` back into the
+  arguments `winsteps_write_control_file()` takes, so an established Winsteps
+  setup can be brought into R rather than rebuilt by hand.
 - `winsteps_read_report()` — read a `TFILE=`-requested table report as raw
   lines, handling the missing-file case. Returns a `winsteps_report`, which
   prints a per-table summary but is otherwise a plain character vector.
@@ -216,6 +222,18 @@ When `run = TRUE`, a failed Winsteps run raises an error: a non-zero exit
 status, or a run that reports success but writes no PFILE. A PFILE containing
 only its header is *not* a failure — that is Winsteps' normal output for a
 cohort with no estimable persons, and it yields a zero-row `results` tibble.
+
+## Vignettes
+
+- `vignette("winstepsR")` — getting started, end to end.
+- `vignette("anatomy-of-a-run")` — the files Winsteps reads and writes, how the
+  fixed-width layout works, and why `ITEM1`, `NAMLEN` and `NI` have to agree
+  with the bytes on the line. Start here if the file formats are unfamiliar.
+- `vignette("domain-scoring")` — scoring one content domain at a time while
+  keeping every domain on the same scale.
+
+All three build without Winsteps installed, using real Winsteps output shipped
+in `inst/extdata`.
 
 ## Notes and known gaps
 
