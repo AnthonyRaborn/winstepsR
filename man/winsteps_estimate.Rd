@@ -80,4 +80,11 @@ subset of items, e.g. one content domain) and return the result.
 Each call uses its own subdirectory of \code{working_dir} so that repeated
 calls (e.g. once per exam, once per domain) don't overwrite each
 other's intermediate files.
+
+When \code{run = TRUE}, a failed Winsteps run raises an error rather
+than returning an empty result: a non-zero exit status errors via
+\code{\link[=winsteps_run]{winsteps_run()}}, and a run that reports success but writes no PFILE
+errors here. A PFILE containing only its header is \emph{not} a failure --
+that is Winsteps' normal output for a cohort with no estimable persons,
+and it yields a zero-row \code{results} tibble.
 }

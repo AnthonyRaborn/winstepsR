@@ -35,6 +35,13 @@
 #'   to `FALSE` to only generate input files (e.g. to inspect them, or to
 #'   run Winsteps manually / on a different machine).
 #'
+#' @details When `run = TRUE`, a failed Winsteps run raises an error rather
+#'   than returning an empty result: a non-zero exit status errors via
+#'   [winsteps_run()], and a run that reports success but writes no PFILE
+#'   errors here. A PFILE containing only its header is *not* a failure --
+#'   that is Winsteps' normal output for a cohort with no estimable persons,
+#'   and it yields a zero-row `results` tibble.
+#'
 #' @return A list with the paths of every file written (`data_file`,
 #'   `anchor_file`, `delete_file`, `control_file`, `bat_file`,
 #'   `person_file`, `report_file`); a parallel `contents` list holding the
@@ -125,10 +132,24 @@ winsteps_estimate <- function(data,
   )
 
   if (run) {
+    # Errors on a non-zero exit status, so a crashed run cannot be mistaken
+    # downstream for a cohort with no eligible persons.
     winsteps_run(bat_file)
+
+    # A run that succeeded but wrote no PFILE at all is a failure, not an empty
+    # cohort: Winsteps writes at least a header line when it estimates nobody.
+    # A header-only PFILE is still the legitimate empty case and stays a
+    # zero-row result, so only the missing-file case is treated as an error.
+    if (!file.exists(person_file)) {
+      stop(
+        "Winsteps reported success but wrote no person output file: ",
+        person_file, ". Check the control file (PFILE=) and the run directory: ",
+        run_dir,
+        call. = FALSE
+      )
+    }
     result$results <- winsteps_read_person_output(person_file)
-    result$contents$person <-
-      if (file.exists(person_file)) readLines(person_file, warn = FALSE) else NULL
+    result$contents$person <- readLines(person_file, warn = FALSE)
     result$contents$report <- winsteps_read_report(report_file)
   }
 

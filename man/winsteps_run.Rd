@@ -4,15 +4,19 @@
 \alias{winsteps_run}
 \title{Run a Winsteps batch file}
 \usage{
-winsteps_run(bat_file, wait = TRUE)
+winsteps_run(bat_file, wait = TRUE, error_on_failure = TRUE)
 }
 \arguments{
 \item{bat_file}{Path to the \code{.bat} file to run.}
 
 \item{wait}{Whether to block until Winsteps exits. Defaults to \code{TRUE}.}
+
+\item{error_on_failure}{If \code{TRUE} (default), a non-zero exit status from
+Winsteps raises an error rather than being returned silently. Only
+meaningful when \code{wait = TRUE}, since a status is not available otherwise.}
 }
 \value{
-The integer status code from \code{\link[=shell]{shell()}}, invisibly.
+The integer status code, invisibly.
 }
 \description{
 Runs a \code{.bat} file written by \code{\link[=winsteps_write_bat]{winsteps_write_bat()}} from its own
