@@ -122,3 +122,26 @@ test_that("write_control_file rejects non-positive layout positions", {
     "namlen must be a single positive whole number"
   )
 })
+
+test_that("namlen accounts for a multi-character delimiter", {
+  # C4: the default assumed a one-character delimiter, so a two-character one
+  # made NAMLEN one too long and the person name absorbed a delimiter char.
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+
+  # ID width 3, delimiter "**" -> ITEM1 = 3 + 2 + 1 = 6, NAMLEN should be 3
+  winsteps_write_control_file(tmp, "d.dat", n_items = 2, item1 = 6,
+                              delimiter_width = 2)
+  expect_true("NAMLEN=3;" %in% readLines(tmp))
+
+  # the single-character default is unchanged
+  winsteps_write_control_file(tmp, "d.dat", n_items = 2, item1 = 5)
+  expect_true("NAMLEN=3;" %in% readLines(tmp))
+})
+
+test_that("an explicit namlen still wins over the derived default", {
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  winsteps_write_control_file(tmp, "d.dat", n_items = 2, item1 = 6, namlen = 4)
+  expect_true("NAMLEN=4;" %in% readLines(tmp))
+})

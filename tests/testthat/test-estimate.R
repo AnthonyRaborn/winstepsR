@@ -122,3 +122,24 @@ test_that("a zero or unavailable exit status is not treated as a failure", {
   expect_silent(winstepsR:::winsteps_stop_on_status(NA_integer_, bat))
   expect_silent(winstepsR:::winsteps_stop_on_status(NULL, bat))
 })
+
+test_that("winsteps_estimate sets NAMLEN from the prepared ID width", {
+  data <- data.frame(
+    id = rep(c("00001", "00002"), each = 2),
+    item = rep(c("A", "B"), 2),
+    score = c(1, 0, 1, 1)
+  )
+  tmp_dir <- tempfile()
+  on.exit(unlink(tmp_dir, recursive = TRUE))
+  old <- getOption("winstepsR.exe_path")
+  options(winstepsR.exe_path = "Winsteps.exe")
+  on.exit(options(winstepsR.exe_path = old), add = TRUE)
+
+  result <- winsteps_estimate(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    items = c("A", "B"), anchor_values = c(-0.5, 0.5),
+    run_id = "namlen_run", working_dir = tmp_dir, run = FALSE
+  )
+  expect_true("NAMLEN=5;" %in% result$contents$control)
+  expect_true("ITEM1=7;" %in% result$contents$control)
+})

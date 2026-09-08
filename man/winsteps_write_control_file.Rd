@@ -10,7 +10,8 @@ winsteps_write_control_file(
   n_items,
   item1,
   name1 = 1,
-  namlen = item1 - name1 - 1,
+  delimiter_width = 1,
+  namlen = item1 - name1 - delimiter_width,
   codes = "01",
   iafile = NULL,
   idfile = NULL,
@@ -38,10 +39,16 @@ Use \code{item1} from \code{\link[=winsteps_prepare_person_data]{winsteps_prepar
 \item{name1}{Column position of the first character of the person ID
 (\verb{NAME1=}). Defaults to \code{1}.}
 
+\item{delimiter_width}{Width of the delimiter separating the person ID
+from the first item response, used only to derive the \code{namlen} default.
+Defaults to \code{1}; pass \code{nchar(delimiter)} from
+\code{\link[=winsteps_prepare_person_data]{winsteps_prepare_person_data()}} if you used a longer one.}
+
 \item{namlen}{Width of the person ID field (\verb{NAMLEN=}). Defaults to
-\code{item1 - name1 - 1}, i.e. everything between \code{NAME1} and \code{ITEM1},
-which is correct when the ID is immediately followed by a
-single-character delimiter and then the items.}
+\code{item1 - name1 - delimiter_width}, i.e. everything between \code{NAME1} and
+\code{ITEM1} except the delimiter itself. Passing \code{id_width} from
+\code{\link[=winsteps_prepare_person_data]{winsteps_prepare_person_data()}} directly is more direct and always
+correct.}
 
 \item{codes}{String of valid single-character response codes
 (\verb{CODES=}). Defaults to \code{"01"}.}

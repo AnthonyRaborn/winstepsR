@@ -16,10 +16,15 @@
 #'   Use `item1` from [winsteps_prepare_person_data()].
 #' @param name1 Column position of the first character of the person ID
 #'   (`NAME1=`). Defaults to `1`.
+#' @param delimiter_width Width of the delimiter separating the person ID
+#'   from the first item response, used only to derive the `namlen` default.
+#'   Defaults to `1`; pass `nchar(delimiter)` from
+#'   [winsteps_prepare_person_data()] if you used a longer one.
 #' @param namlen Width of the person ID field (`NAMLEN=`). Defaults to
-#'   `item1 - name1 - 1`, i.e. everything between `NAME1` and `ITEM1`,
-#'   which is correct when the ID is immediately followed by a
-#'   single-character delimiter and then the items.
+#'   `item1 - name1 - delimiter_width`, i.e. everything between `NAME1` and
+#'   `ITEM1` except the delimiter itself. Passing `id_width` from
+#'   [winsteps_prepare_person_data()] directly is more direct and always
+#'   correct.
 #' @param codes String of valid single-character response codes
 #'   (`CODES=`). Defaults to `"01"`.
 #' @param iafile Optional path for `IAFILE=` (item anchor file).
@@ -54,7 +59,8 @@ winsteps_write_control_file <- function(file,
                                          n_items,
                                          item1,
                                          name1 = 1,
-                                         namlen = item1 - name1 - 1,
+                                         delimiter_width = 1,
+                                         namlen = item1 - name1 - delimiter_width,
                                          codes = "01",
                                          iafile = NULL,
                                          idfile = NULL,
@@ -75,6 +81,7 @@ winsteps_write_control_file <- function(file,
   check_position(n_items, "n_items")
   check_position(item1, "item1")
   check_position(name1, "name1")
+  check_position(delimiter_width, "delimiter_width")
   check_position(namlen, "namlen")
 
   if (!is.null(item_labels) && length(item_labels) != n_items) {

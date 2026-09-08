@@ -98,6 +98,10 @@ winsteps_estimate <- function(data,
       data_file = basename(data_file),
       n_items = prepared$n_items,
       item1 = prepared$item1,
+      # Passed explicitly rather than left to the control file's derived
+      # default: the person name field is exactly the ID field, whatever
+      # delimiter width was used.
+      namlen = prepared$id_width,
       iafile = basename(anchor_file),
       idfile = if (!is.null(delete_file)) basename(delete_file) else NULL,
       pfile = basename(person_file)
