@@ -1,0 +1,9 @@
+# The files in inst/extdata are verbatim Winsteps output, captured from a real
+# run on Windows. Git must not translate their line endings in either
+# direction: the bytes are the point of a fixture, and a checkout that rewrote
+# them would make the round-trip test compare the package against something
+# Winsteps did not write.
+#
+# This also prevents the merge that produced this file: with translation on,
+# a CRLF copy and an LF copy of the same output conflict on every single line.
+inst/extdata/** -text
