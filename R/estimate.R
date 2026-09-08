@@ -297,13 +297,16 @@ winsteps_run_paths <- function(run_dir, subset = FALSE) {
 # actually landed on disk for a format with no validation on the far side.
 winsteps_read_back <- function(paths) {
   read_or_null <- function(f) if (!is.null(f) && file.exists(f)) readLines(f, warn = FALSE) else NULL
-  list(
+  out <- list(
     data    = read_or_null(paths$data_file),
     anchor  = read_or_null(paths$anchor_file),
     delete  = read_or_null(paths$delete_file),
     control = read_or_null(paths$control_file),
     bat     = read_or_null(paths$bat_file)
   )
+  # Drop entries for files that were not written, so names(contents) lists what
+  # actually exists. Absent and NULL read the same through `$`.
+  out[!vapply(out, is.null, logical(1))]
 }
 
 # Compact elapsed-time label for print(): "0.4s", "12.7s", "3m 04s".

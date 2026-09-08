@@ -1,0 +1,155 @@
+---
+title: "Getting started with winstepsR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with winstepsR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+winstepsR is the mechanical half of an R--Winsteps workflow: it writes the files
+Winsteps needs, runs it, and reads the results back. It implements no scoring
+rules of its own -- scale-score conversions, pass marks, domain definitions and
+the like stay in your project, because they are specific to your programme.
+
+```{r setup}
+library(winstepsR)
+```
+
+## Before you start
+
+Winsteps runs on Windows only, and it is licensed separately. Point the package
+at your executable once per session or project:
+
+```{r, eval = FALSE}
+options(winstepsR.exe_path = "C:/Winsteps/Winsteps.exe")
+```
+
+Everything except actually invoking Winsteps works on any platform, which is
+what makes this vignette buildable. Pass `run = FALSE` to generate the input
+files without running.
+
+## What you supply
+
+Two things: responses in long format, and the anchor values for your items.
+
+```{r}
+responses <- utils::read.csv(
+  system.file("extdata", "example_responses.csv", package = "winstepsR"),
+  colClasses = c("character", "character", "integer")
+)
+head(responses, 3)
+
+anchor_tbl <- utils::read.csv(
+  system.file("extdata", "example_anchors.csv", package = "winstepsR"),
+  colClasses = c("character", "numeric", "character")
+)
+```
+
+Pair the item names with their values. The order matters -- it is the order the
+items will occupy in every file -- so keeping them together prevents them
+drifting apart:
+
+```{r}
+anchors <- winsteps_anchors(anchor_tbl$item, anchor_tbl$value)
+anchors
+```
+
+`winsteps_anchors()` validates once, here, rather than at each writer. A
+duplicated item name, a missing anchor value or mismatched lengths are caught
+now instead of producing a file Winsteps would read incorrectly.
+
+## Estimating
+
+```{r}
+result <- winsteps_estimate(
+  data = responses,
+  id_col = "person_id", item_col = "item", score_col = "score",
+  anchors = anchors,
+  run_id = "spring_form_b",
+  working_dir = tempfile(),
+  winsteps_exe = "C:/Winsteps/Winsteps.exe",
+  run = FALSE            # drop this on Windows to actually run
+)
+result
+```
+
+With `run = TRUE` the result also carries `$results` (person measures) and
+`$items` (item measures). Here is what those look like, using real output from
+this same data:
+
+```{r}
+measures <- winsteps_read_person_output(
+  system.file("extdata", "example_full_person.out", package = "winstepsR")
+)
+measures[1:5, c("ENTRY", "NAME", "MEASURE", "COUNT", "SCORE")]
+```
+
+Column names are left exactly as Winsteps writes them. Renaming `NAME` to
+whatever your project calls it is your business, not the package's.
+
+## Checking the run before you trust it
+
+Two habits worth forming.
+
+**Check that the anchors were applied.** A run whose anchor file was ignored
+finishes normally and returns plausible measures. The item output is the
+evidence:
+
+```{r}
+items <- winsteps_read_item_output(
+  system.file("extdata", "example_full_item.out", package = "winstepsR")
+)
+items[, c("NAME", "MEASURE", "DISPL")]
+```
+
+`MEASURE` should be the value you supplied. `DISPL` is how far the data would
+have moved it -- large displacement means the anchors and the data disagree,
+which is worth understanding before the measures are used.
+
+**Look at the distribution.** `summary()` reports it and nothing more; no fit
+flags, no cut-offs, because every cut-off is a decision belonging to your
+programme:
+
+```{r}
+c(mean = mean(measures$MEASURE), sd = stats::sd(measures$MEASURE))
+table(measures$SCORE)
+```
+
+The full table stays in `$results`, so anything the summary leaves out you can
+compute directly.
+
+## Generating files on one machine, running on another
+
+Because only the run step needs Windows, you can prepare everything anywhere:
+
+```{r, eval = FALSE}
+result <- winsteps_estimate(..., working_dir = "prepared_runs", run = FALSE)
+```
+
+Copy the run directory to a Windows machine and double-click `run.bat`, or call
+`winsteps_run()` there. The batch file changes to its own directory first, so it
+works wherever it is put.
+
+`result$contents` holds the lines of every file that was written, so a run can
+be inspected afterwards even when `working_dir` was a temporary directory the
+operating system has since cleared:
+
+```{r}
+names(result$contents)
+head(result$contents$data, 2)
+head(result$contents$anchor, 2)
+```
+
+## When the wrapper does not fit
+
+`winsteps_estimate()` composes eight smaller functions, each usable alone:
+`winsteps_prepare_person_data()`, `winsteps_write_person_data()`,
+`winsteps_write_anchor_file()`, `winsteps_write_item_subset_file()`,
+`winsteps_write_control_file()`, `winsteps_write_bat()`, `winsteps_run()`, and
+the readers. See `vignette("anatomy-of-a-run")` for what each file contains and
+why the layout matters.

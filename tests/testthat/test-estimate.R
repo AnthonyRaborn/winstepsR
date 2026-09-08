@@ -470,3 +470,28 @@ test_that("a caller can still supply their own item labels", {
   expect_equal(ctrl[(end + 1):(end + 2)],
                c("Airway management", "Cardiac rhythm"))
 })
+
+test_that("contents lists only the files that were actually written", {
+  # names(contents) previously advertised a `delete` entry on every run, even
+  # when no item subset was used and no delete file existed.
+  data <- data.frame(
+    id = rep(c("001", "002"), each = 2),
+    item = rep(c("A", "B"), 2), score = c(1, 0, 0, 1)
+  )
+  args <- list(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    anchors = winsteps_anchors(c("A", "B"), c(-0.5, 0.5)),
+    winsteps_exe = "Winsteps.exe", run = FALSE
+  )
+
+  plain <- do.call(winsteps_estimate,
+                   c(args, list(run_id = "plain", working_dir = tempfile())))
+  expect_false("delete" %in% names(plain$contents))
+  expect_null(plain$contents$delete)          # still reads as NULL
+
+  subset <- do.call(winsteps_estimate,
+                    c(args, list(keep_items = "A", run_id = "sub",
+                                 working_dir = tempfile())))
+  expect_true("delete" %in% names(subset$contents))
+  expect_length(subset$contents$delete, 1)
+})

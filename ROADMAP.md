@@ -329,17 +329,23 @@ real measures.
 
 ---
 
-## 4. Vignettes
+## 4. Vignettes -- **done**
 
-Needs `Suggests: knitr, rmarkdown` and `VignetteBuilder: knitr`. All three are
-blocked on the fixtures above, since none can invoke Winsteps.
+All three written, and all three build during `R CMD check`. None invokes
+Winsteps: input files are generated with `run = FALSE`, and every result shown
+is the real output in `inst/extdata`.
 
-1. **Anatomy of a Winsteps run** — what each generated file is, how the
-   fixed-width layout works, and why `ITEM1` and `NAMLEN` have to agree. Write
-   this one first: it is the document that answers "I could not follow what the
-   functions were doing", which is what prompted the S3 and structure work.
-2. **Getting started** — the README flow, but executed.
-3. **Domain and subset scoring** — the `keep_items` / `IDFILE` workflow.
+1. `vignette("anatomy-of-a-run")` — the files Winsteps reads and writes, the
+   fixed-width layout, and why `ITEM1`, `NAMLEN` and `NI` have to agree with
+   the bytes on the line. This is the document that answers "I could not follow
+   what the functions were doing", which prompted the S3 and structure work.
+2. `vignette("winstepsR")` — getting started, end to end.
+3. `vignette("domain-scoring")` — the `keep_items` / `IDFILE` workflow.
+
+Writing them surfaced one real defect: `names(result$contents)` advertised a
+`delete` entry on every run, including runs with no item subset and therefore
+no delete file. `print()` filtered the NULL; `names()` did not. Fixed, with a
+test.
 
 ---
 

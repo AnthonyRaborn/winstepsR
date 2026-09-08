@@ -1,0 +1,236 @@
+---
+title: "Anatomy of a Winsteps run"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Anatomy of a Winsteps run}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+Winsteps is not a library you call. It is a program that reads a set of plain
+text files from a directory, writes another set of files back, and exits. Every
+function in this package exists to produce one of those files or to read one of
+them, so the fastest way to understand the package is to look at the files.
+
+Everything below runs without Winsteps installed. The input files are generated
+here; the output files are real Winsteps output shipped with the package.
+
+```{r setup}
+library(winstepsR)
+```
+
+## The data going in
+
+Responses arrive in long format -- one row per person per item.
+
+```{r}
+responses <- utils::read.csv(
+  system.file("extdata", "example_responses.csv", package = "winstepsR"),
+  colClasses = c("character", "character", "integer")
+)
+head(responses, 4)
+nrow(responses)
+```
+
+The item difficulties were calibrated somewhere else. Here they are anchors:
+values Winsteps is told to hold fixed rather than estimate.
+
+```{r}
+anchor_tbl <- utils::read.csv(
+  system.file("extdata", "example_anchors.csv", package = "winstepsR"),
+  colClasses = c("character", "numeric", "character")
+)
+
+anchors <- winsteps_anchors(anchor_tbl$item, anchor_tbl$value)
+anchors
+```
+
+`winsteps_anchors()` exists because item names and anchor values are two vectors
+that have to stay in the same order -- sequence number *is* position in the
+files below. Keeping them in one object makes that structural rather than
+something every call has to remember.
+
+## The fixed-width layout
+
+This is the part worth understanding, because it is where silent errors live.
+
+Winsteps reads its data file by **column position**. Each line is a person: a
+left-justified ID padded to a fixed width, a delimiter, then one character per
+item.
+
+```{r}
+prepared <- winsteps_prepare_person_data(
+  responses,
+  id_col = "person_id", item_col = "item", score_col = "score",
+  item_order = anchor_tbl$item
+)
+prepared
+```
+
+The printed layout is the whole contract. `NAMLEN=4` says the person name
+occupies columns 1--4. `ITEM1=6` says the first response is at column 6.
+`NI=12` says read twelve of them. If any of those three disagrees with the
+actual bytes on the line, Winsteps does not complain -- it reads whatever is at
+those positions and returns measures computed from the wrong responses.
+
+Three consequences follow, and the package enforces all three:
+
+- **Every response must be exactly one character.** A partial-credit score of
+  `10` would occupy two columns and shift every item after it. That is an error
+  here, not a silent shift.
+- **Widths are counted in bytes, not characters.** A person ID containing an
+  accented letter is more bytes than characters, so padding by character count
+  would move the responses.
+- **`item_order` decides the column order.** Supply it. Without it the order
+  comes from whichever item appears first in the data, so re-sorting the input
+  silently re-orders the columns.
+
+Note the missing responses, written as `.`:
+
+```{r}
+grep(".", prepared$lines, fixed = TRUE, value = TRUE)[1:3]
+```
+
+`CODES=01` lists the valid responses, so anything else -- including `.` -- is
+treated as not administered.
+
+## The four files going in
+
+`winsteps_estimate()` writes them all. With `run = FALSE` it stops before
+invoking Winsteps, which is what lets this vignette build anywhere.
+
+```{r}
+run <- winsteps_estimate(
+  data = responses,
+  id_col = "person_id", item_col = "item", score_col = "score",
+  anchors = anchors,
+  run_id = "anatomy", working_dir = tempfile(),
+  control_args = list(tfile = "17.1"),
+  winsteps_exe = "C:/Winsteps/Winsteps.exe",
+  run = FALSE
+)
+run
+```
+
+**The data file** is the layout above, one line per person:
+
+```{r}
+head(run$contents$data, 3)
+```
+
+**The anchor file** (`IAFILE=`) gives each item's sequence number and its fixed
+value. The item name after the `;` is a comment -- Winsteps never reads it,
+which matters in a moment:
+
+```{r}
+head(run$contents$anchor, 3)
+```
+
+**The control file** is the instructions. Everything the layout section
+described appears here as a keyword:
+
+```{r}
+writeLines(run$contents$control)
+```
+
+Two things to notice. The item names appear again after `&END`, as *labels* --
+that is the only way Winsteps learns them, because the names in the anchor file
+are comments. Without those labels the item output comes back named `I0001`,
+`I0002`, and cannot be joined to your items.
+
+And `PFILE=` and `IFILE=` are requests: they name the files Winsteps should
+write on the way out.
+
+**The batch file** runs it:
+
+```{r}
+writeLines(run$contents$bat)
+```
+
+The first line makes the file self-locating, so it can be launched from any
+directory and still find its control file. Paths are quoted for `cmd.exe` no
+matter which platform generated them -- a file generated on macOS runs on
+Windows unchanged.
+
+## The files coming back
+
+On Windows, `run = TRUE` would execute the batch file and read the results. The
+files below are the real output from exactly this input.
+
+**The person file** (`PFILE=`) is one row per person:
+
+```{r}
+measures <- winsteps_read_person_output(
+  system.file("extdata", "example_full_person.out", package = "winstepsR")
+)
+measures[1:4, c("ENTRY", "NAME", "MEASURE", "COUNT", "SCORE", "MODLSE")]
+```
+
+`NAME` is deliberately read as text. Left to type guessing it would come back
+as character for IDs like `00123` and numeric for IDs like `123` -- so a join on
+that column would work until the day a cohort's IDs happened to lack leading
+zeros.
+
+**The item file** (`IFILE=`) is one row per item, and on an anchored run it is
+how you check that the anchoring actually happened:
+
+```{r}
+items <- winsteps_read_item_output(
+  system.file("extdata", "example_full_item.out", package = "winstepsR")
+)
+items[, c("ENTRY", "NAME", "MEASURE", "DISPL")]
+```
+
+`MEASURE` is the value that was supplied, unchanged. `DISPL` -- displacement --
+is how far the data would have moved it. A run whose anchor file was ignored
+completes normally and returns plausible measures; displacement is the evidence
+that it was not ignored. What counts as too much displacement is a judgement
+this package does not make for you.
+
+```{r}
+range(items$DISPL)
+```
+
+**The report file** holds any tables requested with `TFILE=`:
+
+```{r}
+report <- winsteps_read_report(
+  system.file("extdata", "example_full_report.csv", package = "winstepsR")
+)
+report
+summary(report)
+```
+
+Table layouts vary too much between tables to parse generically, so this stays
+a character vector -- it just prints as a summary rather than as 215 lines.
+
+## Reading the whole thing back
+
+An existing control file can be parsed into the arguments that would write it,
+which is the fastest way to bring an established Winsteps setup into R:
+
+```{r}
+winsteps_read_control_file(
+  system.file("extdata", "example_full_control.ctr", package = "winstepsR")
+)
+```
+
+## What each function writes or reads
+
+| File | Winsteps keyword | Written by | Read by |
+|---|---|---|---|
+| Person data | `DATA=` | `winsteps_write_person_data()` | -- |
+| Item anchors | `IAFILE=` | `winsteps_write_anchor_file()` | -- |
+| Item subset | `IDFILE=` | `winsteps_write_item_subset_file()` | -- |
+| Control | -- | `winsteps_write_control_file()` | `winsteps_read_control_file()` |
+| Batch runner | -- | `winsteps_write_bat()` | -- |
+| Person output | `PFILE=` | -- | `winsteps_read_person_output()` |
+| Item output | `IFILE=` | -- | `winsteps_read_item_output()` |
+| Table report | `TFILE=` | -- | `winsteps_read_report()` |
+
+`winsteps_estimate()` is a wrapper that calls all of them in order. Every one
+can be used on its own when the wrapper's assumptions do not fit.

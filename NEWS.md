@@ -180,6 +180,15 @@ cases into errors at the point the bad input arrives.
 
 ## Documentation
 
+* Three vignettes: `vignette("winstepsR")` for getting started,
+  `vignette("anatomy-of-a-run")` for what each Winsteps file contains and why
+  the fixed-width layout has to line up, and `vignette("domain-scoring")` for
+  scoring a subset of items. All three build without Winsteps installed, using
+  the real output shipped in `inst/extdata`.
+* `result$contents` no longer carries a `delete` entry for runs that wrote no
+  delete file, so `names()` lists the files that exist. `contents$delete` still
+  reads as `NULL` either way.
+
 * Every exported function now has examples, and all but `winsteps_run()` --
   which cannot execute off Windows -- run as part of `R CMD check`. The readers
   work against the real Winsteps output shipped in `inst/extdata`, so the

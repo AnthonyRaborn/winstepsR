@@ -1,0 +1,154 @@
+---
+title: "Scoring a subset of items"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Scoring a subset of items}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+A common requirement is a measure for part of a test as well as the whole: a
+content domain, a subscale, a reporting category. The item difficulties should
+stay the same in both cases -- what changes is which items count.
+
+Winsteps expresses this with `IDFILE=`, a list of item sequence numbers to
+*exclude*. This package takes the inverse, since naming what you want is easier
+than naming what you don't.
+
+```{r setup}
+library(winstepsR)
+
+responses <- utils::read.csv(
+  system.file("extdata", "example_responses.csv", package = "winstepsR"),
+  colClasses = c("character", "character", "integer")
+)
+anchor_tbl <- utils::read.csv(
+  system.file("extdata", "example_anchors.csv", package = "winstepsR"),
+  colClasses = c("character", "numeric", "character")
+)
+anchors <- winsteps_anchors(anchor_tbl$item, anchor_tbl$value)
+```
+
+The example bank has twelve items split across two domains:
+
+```{r}
+anchor_tbl
+```
+
+## One domain
+
+Pass the items to keep. Everything else in the bank is excluded:
+
+```{r}
+domain1 <- anchor_tbl$item[anchor_tbl$domain == "domain1"]
+domain1
+
+run <- winsteps_estimate(
+  data = responses,
+  id_col = "person_id", item_col = "item", score_col = "score",
+  anchors = anchors,
+  keep_items = domain1,
+  run_id = "domain1",
+  working_dir = tempfile(),
+  winsteps_exe = "C:/Winsteps/Winsteps.exe",
+  run = FALSE
+)
+run
+```
+
+The summary line reports both numbers -- twelve items anchored, six actually
+estimated -- which is worth reading, because a domain filter that quietly
+matched nothing is otherwise hard to notice.
+
+The delete file is the inverse of what you asked for:
+
+```{r}
+run$contents$delete
+```
+
+Note that the **data file is unchanged**: all twelve responses are still
+written, and the anchor file still carries all twelve values. Only the control
+file's `IDFILE=` differs. That is deliberate -- the anchors stay identical
+across every domain run, so measures from different domains are on the same
+scale.
+
+## What comes back
+
+Real output from this domain run, shipped with the package:
+
+```{r}
+items <- winsteps_read_item_output(
+  system.file("extdata", "example_domain1_item.out", package = "winstepsR")
+)
+items[, c("ENTRY", "NAME", "MEASURE", "DISPL")]
+```
+
+Two things worth knowing.
+
+`ENTRY` keeps the sequence numbers from the **full** bank -- 1, 3, 5, 7, 9, 11 --
+rather than renumbering the six retained items 1 to 6. So item output from a
+subset run joins back to your item table on either `ENTRY` or `NAME`. Had
+Winsteps renumbered, a join on `ENTRY` would have matched the wrong items
+silently.
+
+And `MEASURE` is the supplied anchor exactly, as it is in the full run. The
+domain measures are on the same scale as everything else.
+
+```{r}
+persons <- winsteps_read_person_output(
+  system.file("extdata", "example_domain1_person.out", package = "winstepsR")
+)
+persons[1:5, c("NAME", "MEASURE", "COUNT", "SCORE")]
+```
+
+`COUNT` is 6, not 12 -- each person was measured on the six domain items only.
+
+## Every domain in one pass
+
+Give each run a distinct `run_id` so their files do not collide:
+
+```{r}
+work <- tempfile()
+
+domains <- split(anchor_tbl$item, anchor_tbl$domain)
+
+by_domain <- Map(function(items, domain) {
+  winsteps_estimate(
+    data = responses,
+    id_col = "person_id", item_col = "item", score_col = "score",
+    anchors = anchors,
+    keep_items = items,
+    run_id = domain,
+    working_dir = work,
+    winsteps_exe = "C:/Winsteps/Winsteps.exe",
+    run = FALSE
+  )
+}, domains, names(domains))
+
+vapply(by_domain, function(r) basename(r$run_dir), character(1))
+```
+
+`run_id` names a subdirectory, so two runs sharing one would overwrite each
+other. The paths are deterministic rather than unique -- that is useful, but it
+means distinct names are your responsibility.
+
+On Windows these can run in parallel: the batch file each run writes changes to
+its own directory, so concurrent runs do not interfere.
+
+## Choosing the domains
+
+A caution that has nothing to do with the software. A domain made up of the
+easiest items will have most candidates answering everything correctly, and
+perfect scores carry no interior measure. The example data deliberately
+alternates items between domains so both span the difficulty range:
+
+```{r}
+tapply(anchor_tbl$value, anchor_tbl$domain, range)
+```
+
+Whether your real domains do the same is a test-design question, but it shows up
+here as a pile of extreme scores in the person output.

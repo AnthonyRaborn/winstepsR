@@ -5,3 +5,5 @@
 ^\.DS_Store$
 ^ROADMAP\.md$
 ^data-raw$
+^doc$
+^Meta$
