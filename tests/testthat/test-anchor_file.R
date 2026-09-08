@@ -87,3 +87,17 @@ test_that("item names containing the file's own delimiters are rejected", {
     "must not contain tabs or semicolons"
   )
 })
+
+test_that("anchor values ignore a non-default decimal separator", {
+  # Winsteps parses "0.5"; options(OutDec = ",") would otherwise write "0,5"
+  # with no error, in the same way scientific notation would.
+  old <- getOption("OutDec")
+  options(OutDec = ",")
+  on.exit(options(OutDec = old))
+
+  tmp <- tempfile()
+  on.exit(unlink(tmp), add = TRUE)
+  winsteps_write_anchor_file(c("A", "B"), c(-0.5, 1.25), tmp)
+  expect_equal(readLines(tmp), c("1\t-0.50\t;\tA", "2\t1.25\t;\tB"))
+  expect_false(any(grepl(",", readLines(tmp), fixed = TRUE)))
+})

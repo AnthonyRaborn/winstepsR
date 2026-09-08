@@ -38,6 +38,21 @@ cases into errors at the point the bad input arrives.
 * `IAFILE`/`IDFILE`/`PFILE` paths containing whitespace are quoted; paths
   without whitespace are written exactly as before.
 
+## Correctness (second pass)
+
+* Anchor values and estimation keywords are written with an explicit
+  `decimal.mark`, so `options(OutDec = ",")` can no longer turn `0.5` into
+  `0,5` or `LCONV=0.0001` into `LCONV=0,0001`. This is the same hazard the
+  existing `scientific = FALSE` guard covers, from a different setting.
+* Person-ID and delimiter widths are measured in bytes rather than characters,
+  since Winsteps counts file columns in bytes. A multi-byte ID previously
+  shifted that person's responses one column left of the `ITEM1` the package
+  reported.
+* `winsteps_prepare_person_data()` documented its `item_order` default as
+  sorting the items; it actually uses first-appearance order, so reordering the
+  input rows silently reordered the response columns. Documented accurately,
+  with a stronger recommendation to pass `item_order` explicitly.
+
 ## Structure
 
 * New `winsteps_anchors()` pairs item names with their anchor values in one

@@ -97,16 +97,18 @@ check_one_response_per_pair <- function(long) {
 # it rather than failing.
 xwide_note <- "Winsteps reads one character per item unless XWIDE= is set, which this function does not support"
 
+# Widths are measured in bytes because Winsteps counts file columns in bytes,
+# not characters.
 check_single_char <- function(x, what) {
-  if (length(x) != 1 || is.na(x) || nchar(x) != 1L) {
-    stop(what, " must be exactly one character, not \"", x, "\". ",
+  if (length(x) != 1 || is.na(x) || nchar(x, type = "bytes") != 1L) {
+    stop(what, " must be exactly one character, and one byte, not \"", x, "\". ",
          xwide_note, ".", call. = FALSE)
   }
   invisible(x)
 }
 
 check_single_char_codes <- function(codes) {
-  wide <- unique(codes[nchar(codes) != 1L])
+  wide <- unique(codes[nchar(codes, type = "bytes") != 1L])
   if (length(wide) > 0) {
     stop("Response codes must be exactly one character each; found ",
          length(wide), " that are not: ", format_examples(wide, quote = TRUE),

@@ -169,3 +169,18 @@ test_that("paths containing spaces are quoted, and paths without them are not", 
   expect_true("IAFILE=anchor.txt;" %in% lines)
   expect_true("PFILE=person.out;" %in% lines)
 })
+
+test_that("estimation values ignore a non-default decimal separator", {
+  old <- getOption("OutDec")
+  options(OutDec = ",")
+  on.exit(options(OutDec = old))
+
+  tmp <- tempfile()
+  on.exit(unlink(tmp), add = TRUE)
+  winsteps_write_control_file(tmp, "d.dat", n_items = 4, item1 = 11,
+                              estimation = list(LCONV = 0.0001, RCONV = 0.5))
+  lines <- readLines(tmp)
+  expect_true("LCONV=0.0001;" %in% lines)
+  expect_true("RCONV=0.5;" %in% lines)
+  expect_false(any(grepl("0,", lines, fixed = TRUE)))
+})

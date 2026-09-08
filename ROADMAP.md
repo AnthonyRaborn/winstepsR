@@ -20,6 +20,30 @@ with runnable code is in section 10 of the code review. Summary:
 | W2 | How does Winsteps read a two-character score? | Decides whether `XWIDE=` deserves real support or stays a guard |
 | W3 | Does a two-character delimiter shift the person name? | Confirms whether the `NAMLEN` fix ever mattered |
 | W4 | Do LF-only line endings matter to Winsteps or `cmd.exe`? | Decides whether files must be written CRLF for the cross-platform handoff |
+| W5 | Can the `.bat` change to its own directory? | Would let `winsteps_run()` drop `setwd()` and become safe to parallelise |
+
+### W5 in detail
+
+`winsteps_run()` changes the process-global working directory, because Winsteps
+writes its output relative to wherever it was launched. The `run_id`
+subdirectory design exists so that many runs can coexist -- one per exam, one
+per domain -- and the obvious way to speed that up is to run them in parallel.
+Two in-process workers would clobber each other's working directory, and the
+`on.exit(setwd(old_wd))` restore does not help, because the calls interleave.
+
+If a batch file can change to its own directory, R never needs to:
+
+```bat
+cd /d "%~dp0"
+"C:/Winsteps/Winsteps.exe" BATCH=YES "control.ctr" "OUT.csv" HLINES=YES
+```
+
+Write that two-line `.bat` next to a working control file, run it from a
+*different* directory, and check whether Winsteps still finds `control.ctr` and
+writes its output beside the batch file rather than into the directory you
+launched from. If it does, `winsteps_run()` loses its `setwd()` entirely and
+the package becomes parallel-safe.
+
 
 ### Collect fixtures at the same time
 
@@ -36,6 +60,22 @@ small cohort with `control_args = list(tfile = c("17.1", "3.1"))` and keep:
 
 Both then become test fixtures *and* the static output vignettes need, since a
 vignette cannot run Winsteps.
+
+---
+
+## 0b. Closed, no action needed
+
+**Performance.** The review flagged that `winsteps_read_person_output()` reads
+the PFILE twice and that `result$contents` holds whole files in memory,
+speculating these might matter at scale. Measured, they do not:
+
+| Cohort | Long rows | Elapsed | Result object |
+|---|---|---|---|
+| 1,000 persons x 200 items | 200k | 0.13s | 0.3 MB |
+| 10,000 persons x 200 items | 2M | 1.41s | 2.5 MB |
+
+Linear and fast at any cohort size this package would plausibly score. Dropped
+rather than carried as implied future work.
 
 ---
 

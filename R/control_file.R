@@ -85,8 +85,15 @@ winsteps_write_control_file <- function(file,
     if (grepl("[[:space:]]", x) && !grepl('^".*"$', x)) paste0('"', x, '"') else x
   }
 
+  # scientific = FALSE keeps 0.0001 from becoming 1e-04, and decimal.mark
+  # keeps options(OutDec = ",") from writing 0,0001. Winsteps silently
+  # misreads both.
   fmt <- function(x) {
-    if (is.numeric(x)) format(x, scientific = FALSE, trim = TRUE) else as.character(x)
+    if (is.numeric(x)) {
+      format(x, scientific = FALSE, trim = TRUE, decimal.mark = ".")
+    } else {
+      as.character(x)
+    }
   }
 
   default_estimation <- list(

@@ -37,10 +37,11 @@ between the ID field and the first item response. Defaults to \code{"*"}.}
 combination with no response. Defaults to \code{"."}.}
 
 \item{item_order}{Optional character vector giving the exact, ordered
-set of items to include (and their column order). If omitted, items
-are ordered as they naturally sort after pivoting. Supplying this
-explicitly is recommended so that the anchor file and data file stay
-in sync.}
+set of items to include (and their column order). \strong{Supply this.} If
+omitted, items appear in the order they are first encountered in \code{data}
+-- not sorted -- so reordering the input rows silently reorders the
+response columns, and sequence numbers then disagree with an anchor file
+built anywhere else. \code{\link[=winsteps_estimate]{winsteps_estimate()}} always passes it.}
 }
 \value{
 An object of class \code{winsteps_person_data}: a list with the

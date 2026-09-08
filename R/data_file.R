@@ -26,10 +26,11 @@
 #' @param missing_code Single-character code written for a person-item
 #'   combination with no response. Defaults to `"."`.
 #' @param item_order Optional character vector giving the exact, ordered
-#'   set of items to include (and their column order). If omitted, items
-#'   are ordered as they naturally sort after pivoting. Supplying this
-#'   explicitly is recommended so that the anchor file and data file stay
-#'   in sync.
+#'   set of items to include (and their column order). **Supply this.** If
+#'   omitted, items appear in the order they are first encountered in `data`
+#'   -- not sorted -- so reordering the input rows silently reorders the
+#'   response columns, and sequence numbers then disagree with an anchor file
+#'   built anywhere else. [winsteps_estimate()] always passes it.
 #'
 #' @examples
 #' responses <- data.frame(
@@ -66,7 +67,9 @@ winsteps_prepare_person_data <- function(data,
   stopifnot(is.data.frame(data))
   check_columns_present(data, c(id_col, item_col, score_col))
   check_has_rows(data)
-  if (nchar(delimiter) < 1) stop("delimiter must be at least one character", call. = FALSE)
+  if (nchar(delimiter, type = "bytes") < 1) {
+    stop("delimiter must be at least one character", call. = FALSE)
+  }
   check_single_char(missing_code, "missing_code")
 
   long <- data[, c(id_col, item_col, score_col)]
@@ -97,13 +100,18 @@ winsteps_prepare_person_data <- function(data,
   }
   wide <- wide[, c("id", item_order), drop = FALSE]
 
+  # Winsteps counts columns in bytes, so every width here is measured in bytes
+  # rather than characters: a multi-byte ID (e.g. one carrying an accent) would
+  # otherwise be padded to the wrong column and shift ITEM1 for that person.
+  id_bytes <- nchar(wide$id, type = "bytes")
   if (is.null(id_width)) {
-    id_width <- max(nchar(wide$id))
+    id_width <- max(id_bytes)
   }
-  if (any(nchar(wide$id) > id_width)) {
-    stop("id_width (", id_width, ") is smaller than at least one person ID", call. = FALSE)
+  if (any(id_bytes > id_width)) {
+    stop("id_width (", id_width, ") is smaller than at least one person ID",
+         call. = FALSE)
   }
-  ids <- formatC(wide$id, width = -id_width, flag = "-")
+  ids <- paste0(wide$id, strrep(" ", id_width - id_bytes))
 
   response_block <- do.call(paste0, wide[item_order])
   lines <- paste0(ids, delimiter, response_block)
@@ -114,7 +122,7 @@ winsteps_prepare_person_data <- function(data,
       items = item_order,
       n_items = length(item_order),
       id_width = id_width,
-      item1 = id_width + nchar(delimiter) + 1L,
+      item1 = id_width + nchar(delimiter, type = "bytes") + 1L,
       delimiter = delimiter
     ),
     class = "winsteps_person_data"

@@ -183,3 +183,48 @@ test_that("the printed layout tracks a multi-character delimiter", {
   expect_true(any(grepl("Delimiter 6-7", out)))
   expect_true(any(grepl("ITEM1=8", out)))
 })
+
+test_that("column positions are measured in bytes, not characters", {
+  # Winsteps counts file columns in bytes, so a multi-byte ID must still land
+  # the first response at the byte position ITEM1 advertises.
+  data <- data.frame(
+    id = c("Ana\u00efs", "Bob"),
+    item = c("A", "A"),
+    score = c(1, 0),
+    stringsAsFactors = FALSE
+  )
+  prepared <- winsteps_prepare_person_data(data, "id", "item", "score")
+
+  # "Anais" with an accent is 5 characters but 6 bytes
+  expect_equal(prepared$id_width, 6)
+  expect_equal(prepared$item1, 8)
+
+  # every line is the same number of bytes wide...
+  widths <- vapply(prepared$lines, function(l) length(charToRaw(l)), integer(1))
+  expect_true(all(widths == widths[1]))
+
+  # ...and the response byte really is at item1, for the ASCII and the
+  # non-ASCII person alike
+  at_item1 <- vapply(
+    prepared$lines,
+    function(l) rawToChar(charToRaw(l)[prepared$item1]),
+    character(1),
+    USE.NAMES = FALSE
+  )
+  expect_equal(at_item1, c("1", "0"))
+})
+
+test_that("a non-numeric multi-byte score is coerced to missing, not written", {
+  # Scores pass through as.numeric() first, so a multi-byte value can never
+  # reach the response block; it warns and becomes the missing code.
+  data <- data.frame(
+    id = c("1", "1"), item = c("A", "B"),
+    score = c("\u00e9", "0"), stringsAsFactors = FALSE
+  )
+  expect_warning(
+    prepared <- winsteps_prepare_person_data(data, "id", "item", "score"),
+    "could not be read as numbers"
+  )
+  expect_equal(prepared$lines, "1*.0")
+  expect_equal(length(charToRaw(prepared$lines)), 4L)
+})

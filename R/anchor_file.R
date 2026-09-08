@@ -31,7 +31,10 @@ winsteps_write_anchor_file.winsteps_anchors <- function(x, file, digits = NULL, 
 
   out <- data.frame(
     seq = seq_along(x$items),
-    value = format(values, scientific = FALSE, trim = TRUE),
+    # decimal.mark is pinned for the same reason scientific notation is
+    # suppressed: Winsteps parses "0.5", and options(OutDec = ",") would
+    # otherwise write "0,5" here without any error.
+    value = format(values, scientific = FALSE, trim = TRUE, decimal.mark = "."),
     delim = ";",
     item = x$items,
     stringsAsFactors = FALSE
