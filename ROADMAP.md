@@ -95,7 +95,20 @@ comment line, the `;`-commented column-name line, values written without a
 leading zero (`.72`), the trailing blank line and the 21-column layout are all
 handled by the existing code.
 
-**Example run set -- inputs done, outputs pending.**
+**Example run set -- done for the domain run.** Real Winsteps output from a
+correctly anchored run is installed at `inst/extdata/example_domain1_*`, and
+the tests check the item reader against it: item names, `ENTRY` numbering,
+`MEASURE` equal to the supplied anchors, and displacement under half a logit.
+
+Still to collect, from the same run that produced those: the full-run
+`example_full_person.out`, `example_full_item.out`, `example_full_report.csv`
+and `example_full_data.dat`. The script already wrote them to `inst/extdata`
+on the Windows machine; they simply have not been transferred. The report file
+is the only one of the four that covers anything untested -- it is the only
+real `TFILE=` output available, and `print.winsteps_report()` and
+`summary.winsteps_report()` have never been exercised against one.
+
+**Original description.**
 `inst/extdata/example_responses.csv` and `example_anchors.csv` hold a worked
 example: 30 persons, 12 items in two domains, five missing responses, one
 person at each score extreme, and responses simulated from the Rasch model
