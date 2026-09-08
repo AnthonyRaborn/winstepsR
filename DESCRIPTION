@@ -20,6 +20,7 @@ Roxygen: list(markdown = TRUE)
 Depends:
     R (>= 4.1)
 Imports:
+    stats,
     tidyr,
     readr,
     tibble,

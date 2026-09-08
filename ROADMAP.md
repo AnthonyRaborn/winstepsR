@@ -225,20 +225,23 @@ and `winsteps_report`; all four have `print()` and nothing else.
   (`anchors[domain_items]`) is exactly what `keep_items` exists to express, and
   would read far better than passing a bank plus a keep vector. `length()`
   pairs with it.
-- **`summary.winsteps_report()`** returning the table index as a data frame.
-  Nearly free — the internal `winsteps_report_tables()` already computes it and
-  is simply not exposed.
-- **`summary.winsteps_result()`** showing the measure distribution. Higher user
-  value than either of the above, but see the scope question below.
+- **`summary.winsteps_report()`** — **done.** Returns the table index as a
+  data frame: one row per table, with its number, starting line and length.
+- **`summary.winsteps_result()`** — **done.** Reports mean, SD and quartiles of
+  `MEASURE`, the range of `MODLSE`, and counts of zero and perfect scores.
 
-### Open question: where is the scope line?
+### Settled: where the scope line sits
 
-`DESCRIPTION` says the package "intentionally does not implement any
-exam-specific scoring rules". Mean and SD of person measures are generic Rasch
-summary, not exam-specific — but "extreme" and "misfitting" need thresholds,
-and thresholds are where project-specific judgment creeps in. Suggested
-resolution: report distributional facts only, and leave every cutoff to the
-caller. Decide before building.
+Distributional facts only. No fit flags, no "misfitting" counts, no cut-offs of
+any kind — each needs a threshold, and choosing thresholds is exam-specific
+work that belongs in the calling project. Counts of zero and perfect scores are
+included because they follow from `SCORE` and `COUNT` by arithmetic rather than
+from a chosen threshold.
+
+This is only defensible because the underlying values stay fully accessible:
+`$results` is the complete Winsteps person table, one row per person, so
+anything the summary omits can be computed directly from it. The same reasoning
+declines the IRF/IIF/TIF work in section 1.
 
 ---
 

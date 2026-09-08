@@ -72,6 +72,18 @@ cases into errors at the point the bad input arrives.
   input rows silently reordered the response columns. Documented accurately,
   with a stronger recommendation to pass `item_order` explicitly.
 
+## Methods
+
+* `summary()` on a `winsteps_result` reports the distribution of the person
+  measures: mean, SD and quartiles of `MEASURE`, the range of `MODLSE`, and
+  counts of zero and perfect scores. Deliberately no fit flags and no cut-offs
+  of any kind -- those need thresholds, which are exam-specific and belong in
+  the calling project. The full person table remains at `$results`, so anything
+  the summary omits can be computed directly from it. The returned object is a
+  list, so the figures are usable programmatically as well as printable.
+* `summary()` on a `winsteps_report` returns its table index as a data frame:
+  one row per table, with the table number, its starting line and its length.
+
 ## Structure
 
 * New `winsteps_anchors()` pairs item names with their anchor values in one
