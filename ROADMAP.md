@@ -36,61 +36,65 @@ and an LF-converted copy. The `.bat` and `.dat` were not tested, and the `.bat`
 is the more exacting case since `cmd.exe` is fussier than Winsteps' own control
 parser. No CRLF work is warranted unless that turns up something.
 
-### Open
+### Settled, second round (8 Sep 2026)
 
+**W2 -- silent corruption confirmed.** Winsteps accepted a data file whose
+response block was four characters wide while the control file declared
+`NI=3`, and returned plausible measures with no warning:
+
+```
+;ENTRY MEASURE ST COUNT SCORE ...
+     1    0.72  1     3     2
+     2   -0.72  1     3     1
+```
+
+Reading one character per column from `ITEM1=5` it saw `1,1,0` and `0,1,0`,
+reported `COUNT = 3` for both persons, and ignored column 8 entirely. Item C
+was scored 0 for both persons although both answered it correctly. This is the
+worst case the review predicted: a run that looks successful and is wrong.
+**The C2 guard stays a hard error.** Real `XWIDE=` support is now a genuine
+feature request rather than a bug fix -- worth doing only if the item banks
+ever go beyond dichotomous.
+
+**W3 -- bug and fix both confirmed.** With the derived `NAMLEN=4`, person IDs
+came back carrying the delimiter; with `delimiter_width = 2`, they came back
+clean:
+
+| `NAMLEN` | `winsteps_read_person_output(...)$NAME` |
+|---|---|
+| 4 (derived, pre-fix behaviour) | `"001*" "002*"` |
+| 3 (`delimiter_width = 2`) | `"001" "002"` |
+
+C4 was real, and 1dd4d60 fixes it.
+
+**W5 -- works.** A `.bat` beginning `cd /d "%~dp0"` runs correctly and produces
+a valid `person.out`. Applied in 2ff7a4b: `winsteps_run()` no longer calls
+`setwd()`, so concurrent runs no longer share a working directory.
+
+### Found by the probes
+
+**The first PFILE column arrives as `;ENTRY`.** Winsteps comments out its own
+column-name line, and the marker runs into the first name, so the column needed
+backticks to reach. Stripped in 2ff7a4b. Not something the review caught --
+it only surfaced once real Winsteps output was parsed.
+
+**The real PFILE column set** is 21 columns: `ENTRY`, `MEASURE`, `ST`, `COUNT`,
+`SCORE`, `MODLSE`, `IN.MSQ`, `INZSTD`, `OUTMSQ`, `OUTZST`, `DISPL`, `PTMA`,
+`WEIGHT`, `OBSMA`, `EXPMA`, `PMA-E`, `RMSR`, `WMLE`, `INDF`, `OUTDF`, `NAME`.
+`skip = 1` is confirmed correct for this version with `HLINES=YES`, and `NAME`
+does come back as character. The read-output tests now use this column set.
+
+### Open
 
 | | Question | What it changes |
 |---|---|---|
-| W2 | How does Winsteps read a two-character score? | Decides whether `XWIDE=` deserves real support or stays a guard |
-| W3 | Does a two-character delimiter shift the person name? | Confirms whether the `NAMLEN` fix ever mattered |
-| W4b | Do LF endings matter to the `.bat` and `.dat`? | Remainder of W4 |
-| W5 | Can the `.bat` change to its own directory? | Would let `winsteps_run()` drop `setwd()` and become safe to parallelise |
+| W4b | Do LF endings matter to the `.bat` and `.dat`? | Remainder of W4; the control file is already known to tolerate them |
 
-**Note for W2 and W3:** both probes as originally written now fail inside the
-package rather than reaching Winsteps -- W2 because the C2 guard rejects the
-two-character score it depends on, and W3 because the protocol reused W2's data
-frame, which carries that same score even though the delimiter question has
-nothing to do with it. Corrected probes that build the malformed input directly
-are needed; see the review notes.
-
-### W5 in detail
-
-`winsteps_run()` changes the process-global working directory, because Winsteps
-writes its output relative to wherever it was launched. The `run_id`
-subdirectory design exists so that many runs can coexist -- one per exam, one
-per domain -- and the obvious way to speed that up is to run them in parallel.
-Two in-process workers would clobber each other's working directory, and the
-`on.exit(setwd(old_wd))` restore does not help, because the calls interleave.
-
-If a batch file can change to its own directory, R never needs to:
-
-```bat
-cd /d "%~dp0"
-"C:/Winsteps/Winsteps.exe" BATCH=YES "control.ctr" "OUT.csv" HLINES=YES
-```
-
-Write that two-line `.bat` next to a working control file, run it from a
-*different* directory, and check whether Winsteps still finds `control.ctr` and
-writes its output beside the batch file rather than into the directory you
-launched from. If it does, `winsteps_run()` loses its `setwd()` entirely and
-the package becomes parallel-safe.
-
-
-### Collect fixtures at the same time
-
-Cheap to grab while at the Windows machine, awkward to arrange later. Run a
-small cohort with `control_args = list(tfile = c("17.1", "3.1"))` and keep:
-
-- **A real PFILE.** The fixtures in `tests/testthat/test-read_output.R` were
-  written from the format description, not from real output. A real file would
-  confirm the header structure, the true column set, and whether `skip = 1` is
-  right for this Winsteps version.
-- **A real batch report.** `print.winsteps_report()` finds tables by matching
-  `^TABLE <n>`, a pattern derived from documentation and never seen in the
-  wild. One real report confirms or corrects it.
-
-Both then become test fixtures *and* the static output vignettes need, since a
-vignette cannot run Winsteps.
+Still worth collecting: a raw `person.out` and a raw `OUT.csv` kept as files,
+rather than their parsed contents. The column set above was recovered from a
+printed tibble; the actual header lines and column spacing are still
+unverified, and vignettes need static output they can show without running
+Winsteps.
 
 ---
 
