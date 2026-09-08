@@ -363,18 +363,34 @@ Done:
 
 Deliberately skipped:
 
-- **`URL` and `BugReports`.** Both need a public remote, which does not exist.
-  Add if the repository is ever published.
 - **Chasing `codetools::checkUsageEnv(all = TRUE)` clean.** It reports
   "parameter changed by assignment" for the normalise-then-use idiom in eight
   places. `R CMD check` does not report these, and the idiom is standard R;
   rewriting them would be churn.
 
+Also done:
+
+- `URL` and `BugReports` point at `AnthonyRaborn/winstepsR`.
+- **Windows CI**, in `.github/workflows/R-CMD-check.yaml`: Windows, macOS and
+  Linux on release, plus Linux on oldrel-1.
+
+  Winsteps is licensed software and cannot be installed on a runner, so a
+  Windows job alone would still not reach the `run = TRUE` path.
+  `tests/testthat/test-windows-run.R` substitutes a stub batch file for
+  `Winsteps.exe` and exercises that path properly: the generated `.bat` is
+  runnable by `cmd.exe`, it locates its own directory when launched from
+  elsewhere, a non-zero exit status raises, a run that writes no PFILE or no
+  IFILE raises, and a successful run populates `$results`, `$items`,
+  `$contents` and `winsteps_elapsed`.
+
+  What that proves is this package's plumbing, not Winsteps' behaviour — those
+  stay separate claims, and the second is what the W-probes settled.
+
+  These tests skip everywhere except Windows, so their first real execution
+  will be on CI. Expect to fix something on the first run.
+
 Still worth doing:
 
-- A Windows CI runner. More valuable here than in most packages, because the
-  execution path cannot be tested on the maintainer's machine at all — every
-  `run = TRUE` branch is currently unexercised by the suite.
 - Consider `spelling::spell_check_package()` and a `URL` check pass before any
   wider release.
 

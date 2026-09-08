@@ -178,6 +178,18 @@ cases into errors at the point the bad input arrives.
 * `winsteps_estimate()` delegates its file paths and its read-back step to
   internal helpers, so its body reads as prepare, write, run, read.
 
+## Infrastructure
+
+* `URL` and `BugReports` now point at the GitHub repository.
+* GitHub Actions runs `R CMD check` on Windows, macOS and Linux. Because
+  Winsteps is licensed software that cannot be installed on a runner, a new
+  Windows-only test file substitutes a stub batch file for `Winsteps.exe` and
+  exercises the `run = TRUE` path that no other platform can reach: the
+  generated `.bat` running under `cmd.exe`, locating its own directory, exit
+  status propagation, the missing-PFILE and missing-IFILE errors, and a
+  successful run populating the result. It tests this package's plumbing, not
+  Winsteps.
+
 ## Documentation
 
 * Three vignettes: `vignette("winstepsR")` for getting started,

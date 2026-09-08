@@ -12,6 +12,8 @@ Description: A thin, organization-agnostic interface between R and the Rasch
     (scale-score conversions, penalty rules, domain definitions, and the
     like) -- those belong in the calling project, not in this package.
 License: MIT + file LICENSE
+URL: https://github.com/AnthonyRaborn/winstepsR
+BugReports: https://github.com/AnthonyRaborn/winstepsR/issues
 SystemRequirements: Winsteps (<https://www.winsteps.com/index.htm>), which is
     licensed separately and runs on Windows only. Generating input files and
     reading output works on any platform; winsteps_run() does not.
