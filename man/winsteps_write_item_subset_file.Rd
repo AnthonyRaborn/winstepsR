@@ -35,3 +35,14 @@ estimation. This is the mechanism used to score a subset of items
 for the full item set. This function inverts a "keep" list into the
 "delete" list Winsteps expects.
 }
+\examples{
+anchors <- winsteps_anchors(sprintf("q\%02d", 1:6), seq(-1.5, 1.5, length.out = 6))
+f <- tempfile(fileext = ".txt")
+
+# name the items to keep; every other item is written to the delete file,
+# which is what Winsteps IDFILE= expects
+winsteps_write_item_subset_file(anchors, keep = c("q01", "q03", "q05"), file = f)
+readLines(f)
+
+unlink(f)
+}

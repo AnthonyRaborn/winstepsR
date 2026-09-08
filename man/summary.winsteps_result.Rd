@@ -34,8 +34,30 @@ Counts of zero and perfect scores are included because they follow from
 \code{SCORE} and \code{COUNT} by arithmetic rather than from a chosen threshold.
 }
 \examples{
-# summary() reports the distribution; the full table stays in $results
-pfile <- system.file("extdata", "pfile_example.out", package = "winstepsR")
+responses <- utils::read.csv(
+  system.file("extdata", "example_responses.csv", package = "winstepsR"),
+  colClasses = c("character", "character", "integer")
+)
+anchor_tbl <- utils::read.csv(
+  system.file("extdata", "example_anchors.csv", package = "winstepsR"),
+  colClasses = c("character", "numeric", "character")
+)
+
+result <- winsteps_estimate(
+  data = responses,
+  id_col = "person_id", item_col = "item", score_col = "score",
+  anchors = winsteps_anchors(anchor_tbl$item, anchor_tbl$value),
+  run_id = "example", working_dir = tempfile(),
+  winsteps_exe = "Winsteps.exe", run = FALSE
+)
+
+# There is nothing to summarise until Winsteps has run; after a real run
+# this reports the measure and model-SE distributions.
+summary(result)
+
+# Those figures are computed from $results, which stays available in full
+# for anything the summary deliberately leaves out.
+pfile <- system.file("extdata", "example_full_person.out", package = "winstepsR")
 measures <- winsteps_read_person_output(pfile)
-measures$MEASURE
+quantile(measures$MEASURE)
 }

@@ -48,3 +48,16 @@ file self-locating: it can be run from any working directory, by
 \code{\link[=winsteps_run]{winsteps_run()}} or by double-clicking it, and still finds its control
 file and leaves its output alongside itself.
 }
+\examples{
+f <- tempfile(fileext = ".bat")
+winsteps_write_bat(
+  f, control_file = "control.ctr", out_file = "OUT.csv",
+  winsteps_exe = "C:/Winsteps/Winsteps.exe"
+)
+
+# the leading cd makes the file self-locating, and paths are quoted for
+# cmd.exe whatever platform generated them
+writeLines(readLines(f))
+
+unlink(f)
+}

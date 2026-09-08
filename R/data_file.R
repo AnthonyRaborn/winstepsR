@@ -159,6 +159,21 @@ print.winsteps_person_data <- function(x, n = 3, ...) {
 #'
 #' @param prepared Output of [winsteps_prepare_person_data()].
 #' @param file Path to write the Winsteps `DATA=` file to.
+#' @examples
+#' responses <- data.frame(
+#'   person_id = rep(c("00001", "00002"), each = 3),
+#'   item      = rep(c("q1", "q2", "q3"), 2),
+#'   score     = c(1, 0, 1, 0, 1, 1)
+#' )
+#' prepared <- winsteps_prepare_person_data(
+#'   responses, "person_id", "item", "score", item_order = c("q1", "q2", "q3")
+#' )
+#'
+#' f <- tempfile(fileext = ".dat")
+#' winsteps_write_person_data(prepared, f)
+#' readLines(f)
+#'
+#' unlink(f)
 #' @export
 winsteps_write_person_data <- function(prepared, file) {
   # Duck-typed rather than requiring the class, so a hand-built list still

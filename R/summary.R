@@ -24,10 +24,32 @@
 #' @export
 #'
 #' @examples
-#' # summary() reports the distribution; the full table stays in $results
-#' pfile <- system.file("extdata", "pfile_example.out", package = "winstepsR")
+#' responses <- utils::read.csv(
+#'   system.file("extdata", "example_responses.csv", package = "winstepsR"),
+#'   colClasses = c("character", "character", "integer")
+#' )
+#' anchor_tbl <- utils::read.csv(
+#'   system.file("extdata", "example_anchors.csv", package = "winstepsR"),
+#'   colClasses = c("character", "numeric", "character")
+#' )
+#'
+#' result <- winsteps_estimate(
+#'   data = responses,
+#'   id_col = "person_id", item_col = "item", score_col = "score",
+#'   anchors = winsteps_anchors(anchor_tbl$item, anchor_tbl$value),
+#'   run_id = "example", working_dir = tempfile(),
+#'   winsteps_exe = "Winsteps.exe", run = FALSE
+#' )
+#'
+#' # There is nothing to summarise until Winsteps has run; after a real run
+#' # this reports the measure and model-SE distributions.
+#' summary(result)
+#'
+#' # Those figures are computed from $results, which stays available in full
+#' # for anything the summary deliberately leaves out.
+#' pfile <- system.file("extdata", "example_full_person.out", package = "winstepsR")
 #' measures <- winsteps_read_person_output(pfile)
-#' measures$MEASURE
+#' quantile(measures$MEASURE)
 summary.winsteps_result <- function(object, ...) {
   res <- object$results
   out <- list(run_id = object$run_id, ran = !is.null(res), n = NROW(res),
@@ -103,6 +125,15 @@ print.summary.winsteps_result <- function(x, ...) {
 #' @return A data frame with one row per table found, giving its `table`
 #'   number, the `start` line and how many `lines` it runs to. Zero rows if the
 #'   report holds no `TABLE` headings.
+#' @examples
+#' f <- system.file("extdata", "example_full_report.csv", package = "winstepsR")
+#' report <- winsteps_read_report(f)
+#'
+#' tables <- summary(report)
+#' tables
+#'
+#' # the index gives you the lines of any one table
+#' head(report[tables$start[1]:(tables$start[1] + 3)])
 #' @export
 summary.winsteps_report <- function(object, ...) {
   tables <- winsteps_report_tables(object)

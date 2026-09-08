@@ -31,6 +31,17 @@
 #'   full set of columns with zero rows; the column-less tibble is returned
 #'   only when there is no column-name line to read (a missing file, or one
 #'   holding nothing but its leading comment).
+#' @examples
+#' pfile <- system.file("extdata", "example_full_person.out", package = "winstepsR")
+#' measures <- winsteps_read_person_output(pfile)
+#' measures[, c("ENTRY", "NAME", "MEASURE", "COUNT", "SCORE")]
+#'
+#' # NAME is read as text, so person IDs keep any leading zeros and the
+#' # column's type does not change with whichever cohort happened to run
+#' class(measures$NAME)
+#'
+#' # a cohort with no estimable persons is a zero-row result, not an error
+#' nrow(winsteps_read_person_output(tempfile()))
 #' @export
 winsteps_read_person_output <- function(file, empty_ok = TRUE, col_types = NULL) {
   read_winsteps_table(file, empty_ok, col_types, what = "person output")
@@ -63,6 +74,15 @@ winsteps_read_person_output <- function(file, empty_ok = TRUE, col_types = NULL)
 #'
 #' @return A tibble of item output, one row per item, with the columns
 #'   Winsteps wrote.
+#' @examples
+#' ifile <- system.file("extdata", "example_full_item.out", package = "winstepsR")
+#' items <- winsteps_read_item_output(ifile)
+#' items[, c("ENTRY", "NAME", "MEASURE", "DISPL")]
+#'
+#' # On an anchored run MEASURE is the value that was supplied, and DISPL is
+#' # how far the data would have moved it. Displacement is the evidence that
+#' # the anchors were applied rather than quietly re-estimated.
+#' range(items$DISPL)
 #' @export
 winsteps_read_item_output <- function(file, empty_ok = TRUE, col_types = NULL) {
   read_winsteps_table(file, empty_ok, col_types, what = "item output")
@@ -118,6 +138,16 @@ read_winsteps_table <- function(file, empty_ok, col_types, what) {
 #'   `character`, so it can be used anywhere a character vector can --
 #'   `grepl()`, `writeLines()`, `length()` and subsetting all behave as
 #'   before. Use [as.character()] to drop the class.
+#' @examples
+#' f <- system.file("extdata", "example_full_report.csv", package = "winstepsR")
+#' report <- winsteps_read_report(f)
+#'
+#' # 215 lines of table output, printed as a summary of what it holds
+#' report
+#'
+#' # it is still a character vector underneath
+#' length(report)
+#' grep("MINIMUM MEASURE", report, value = TRUE)
 #' @export
 winsteps_read_report <- function(file, empty_ok = TRUE) {
   if (!file.exists(file)) {

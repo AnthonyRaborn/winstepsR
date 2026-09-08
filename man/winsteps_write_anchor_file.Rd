@@ -38,3 +38,16 @@ Produces a tab-delimited file with one line per item:
 rest of the line as a Winsteps comment, so the item name is carried
 through purely for human readability and does not affect estimation.
 }
+\examples{
+anchors <- winsteps_anchors(c("q01", "q02", "q03"), c(-1.2, 0, 0.8))
+f <- tempfile(fileext = ".txt")
+
+winsteps_write_anchor_file(anchors, file = f)
+readLines(f)
+
+# the bare item/value vectors work too, and digits rounds before writing
+winsteps_write_anchor_file(c("q01", "q02"), c(-1.234, 0.789), f, digits = 1)
+readLines(f)
+
+unlink(f)
+}

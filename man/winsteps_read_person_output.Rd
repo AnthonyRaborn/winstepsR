@@ -44,3 +44,15 @@ code would return a different type for the same column depending only on
 which persons happened to be in the run -- and any downstream join on that
 column would break on the day the types flipped.
 }
+\examples{
+pfile <- system.file("extdata", "example_full_person.out", package = "winstepsR")
+measures <- winsteps_read_person_output(pfile)
+measures[, c("ENTRY", "NAME", "MEASURE", "COUNT", "SCORE")]
+
+# NAME is read as text, so person IDs keep any leading zeros and the
+# column's type does not change with whichever cohort happened to run
+class(measures$NAME)
+
+# a cohort with no estimable persons is a zero-row result, not an error
+nrow(winsteps_read_person_output(tempfile()))
+}

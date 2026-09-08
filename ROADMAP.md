@@ -311,16 +311,21 @@ declines the IRF/IIF/TIF work in section 1.
 
 ---
 
-## 3. Examples
+## 3. Examples -- **done**
 
-Three of eleven exported objects have `@examples` (`winsteps_estimate`,
-`winsteps_prepare_person_data`, `winsteps_anchors`). The gap is the writers and
-readers. Most can be genuinely runnable against `tempfile()`; only
-`winsteps_run()` needs `\dontrun{}`, which is legitimate since it cannot run
-off Windows.
+Every exported function now has `@examples`, and all but one execute: only
+`winsteps_run()` uses `\dontrun{}`, since it cannot run off Windows. `R CMD
+check` reports `checking examples ... OK`, so they are verified rather than
+prose. The readers demonstrate against the real Winsteps output in
+`inst/extdata`; the writers write to `tempfile()` and show what came out.
 
-Prefer runnable examples over `\dontrun{}` wherever `run = FALSE` makes that
-possible — an example that executes is checked, and one that does not is prose.
+The package-level `?winstepsR` topic has no example, which is conventional.
+
+One thing to watch when adding more: the first draft of the
+`summary.winsteps_result` example printed measures from `pfile_example.out`,
+which is the deliberately corrupt W2 probe output that its own README says must
+not be shown as a correct run. Reach for `example_full_*` when an example needs
+real measures.
 
 ---
 

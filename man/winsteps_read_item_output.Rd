@@ -38,3 +38,13 @@ wrong. Non-trivial displacement on an anchored run is worth investigating
 before the measures are used; what counts as non-trivial is a
 project-specific judgment this package does not make.
 }
+\examples{
+ifile <- system.file("extdata", "example_full_item.out", package = "winstepsR")
+items <- winsteps_read_item_output(ifile)
+items[, c("ENTRY", "NAME", "MEASURE", "DISPL")]
+
+# On an anchored run MEASURE is the value that was supplied, and DISPL is
+# how far the data would have moved it. Displacement is the evidence that
+# the anchors were applied rather than quietly re-estimated.
+range(items$DISPL)
+}

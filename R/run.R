@@ -25,6 +25,18 @@
 #'   file and leaves its output alongside itself.
 #'
 #' @return `file`, invisibly.
+#' @examples
+#' f <- tempfile(fileext = ".bat")
+#' winsteps_write_bat(
+#'   f, control_file = "control.ctr", out_file = "OUT.csv",
+#'   winsteps_exe = "C:/Winsteps/Winsteps.exe"
+#' )
+#'
+#' # the leading cd makes the file self-locating, and paths are quoted for
+#' # cmd.exe whatever platform generated them
+#' writeLines(readLines(f))
+#'
+#' unlink(f)
 #' @export
 winsteps_write_bat <- function(file,
                                 control_file,
@@ -77,6 +89,15 @@ winsteps_write_bat <- function(file,
 #'   meaningful when `wait = TRUE`, since a status is not available otherwise.
 #'
 #' @return The integer status code, invisibly.
+#' @examples
+#' \dontrun{
+#' # Winsteps runs on Windows only, so this cannot be executed here.
+#' options(winstepsR.exe_path = "C:/Winsteps/Winsteps.exe")
+#'
+#' bat <- file.path(tempdir(), "run.bat")
+#' winsteps_write_bat(bat, "control.ctr", "OUT.csv")
+#' winsteps_run(bat)
+#' }
 #' @export
 winsteps_run <- function(bat_file, wait = TRUE, error_on_failure = TRUE) {
   if (.Platform$OS.type != "windows") {

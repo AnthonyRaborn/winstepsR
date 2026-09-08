@@ -14,3 +14,19 @@ winsteps_write_person_data(prepared, file)
 \description{
 Write prepared Winsteps person-data lines to a file
 }
+\examples{
+responses <- data.frame(
+  person_id = rep(c("00001", "00002"), each = 3),
+  item      = rep(c("q1", "q2", "q3"), 2),
+  score     = c(1, 0, 1, 0, 1, 1)
+)
+prepared <- winsteps_prepare_person_data(
+  responses, "person_id", "item", "score", item_order = c("q1", "q2", "q3")
+)
+
+f <- tempfile(fileext = ".dat")
+winsteps_write_person_data(prepared, f)
+readLines(f)
+
+unlink(f)
+}

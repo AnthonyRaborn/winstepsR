@@ -180,6 +180,10 @@ cases into errors at the point the bad input arrives.
 
 ## Documentation
 
+* Every exported function now has examples, and all but `winsteps_run()` --
+  which cannot execute off Windows -- run as part of `R CMD check`. The readers
+  work against the real Winsteps output shipped in `inst/extdata`, so the
+  documentation shows genuine measures rather than invented ones.
 * `?winstepsR` package documentation, runnable examples on
   `winsteps_estimate()` and `winsteps_prepare_person_data()`.
 * The claim that every call gets its own directory is corrected: paths are

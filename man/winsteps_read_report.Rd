@@ -30,3 +30,14 @@ Winsteps tables to usefully parse into a data frame generically, so
 this just returns the raw lines for the caller to inspect or parse
 themselves.
 }
+\examples{
+f <- system.file("extdata", "example_full_report.csv", package = "winstepsR")
+report <- winsteps_read_report(f)
+
+# 215 lines of table output, printed as a summary of what it holds
+report
+
+# it is still a character vector underneath
+length(report)
+grep("MINIMUM MEASURE", report, value = TRUE)
+}

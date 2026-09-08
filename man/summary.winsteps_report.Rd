@@ -19,3 +19,13 @@ report holds no \code{TABLE} headings.
 \description{
 Summarise the tables in a Winsteps batch report
 }
+\examples{
+f <- system.file("extdata", "example_full_report.csv", package = "winstepsR")
+report <- winsteps_read_report(f)
+
+tables <- summary(report)
+tables
+
+# the index gives you the lines of any one table
+head(report[tables$start[1]:(tables$start[1] + 3)])
+}

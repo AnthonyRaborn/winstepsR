@@ -18,6 +18,18 @@
 #' @param ... Passed between methods.
 #'
 #' @return `file`, invisibly.
+#' @examples
+#' anchors <- winsteps_anchors(c("q01", "q02", "q03"), c(-1.2, 0, 0.8))
+#' f <- tempfile(fileext = ".txt")
+#'
+#' winsteps_write_anchor_file(anchors, file = f)
+#' readLines(f)
+#'
+#' # the bare item/value vectors work too, and digits rounds before writing
+#' winsteps_write_anchor_file(c("q01", "q02"), c(-1.234, 0.789), f, digits = 1)
+#' readLines(f)
+#'
+#' unlink(f)
 #' @export
 winsteps_write_anchor_file <- function(x, ...) {
   UseMethod("winsteps_write_anchor_file")
@@ -68,6 +80,16 @@ winsteps_write_anchor_file.default <- function(x, values, file, digits = NULL, .
 #' @param ... Passed between methods.
 #'
 #' @return `file`, invisibly.
+#' @examples
+#' anchors <- winsteps_anchors(sprintf("q%02d", 1:6), seq(-1.5, 1.5, length.out = 6))
+#' f <- tempfile(fileext = ".txt")
+#'
+#' # name the items to keep; every other item is written to the delete file,
+#' # which is what Winsteps IDFILE= expects
+#' winsteps_write_item_subset_file(anchors, keep = c("q01", "q03", "q05"), file = f)
+#' readLines(f)
+#'
+#' unlink(f)
 #' @export
 winsteps_write_item_subset_file <- function(x, ...) {
   UseMethod("winsteps_write_item_subset_file")

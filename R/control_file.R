@@ -57,6 +57,23 @@
 #'   otherwise covered here.
 #'
 #' @return `file`, invisibly.
+#' @examples
+#' f <- tempfile(fileext = ".ctr")
+#' winsteps_write_control_file(
+#'   file = f, data_file = "data.dat", n_items = 3, item1 = 7,
+#'   iafile = "anchor.txt", item_labels = c("q1", "q2", "q3")
+#' )
+#' writeLines(readLines(f))
+#'
+#' # estimation is merged over the built-in defaults, so this adds RCONV
+#' # rather than replacing the list and dropping MPROX and the rest
+#' winsteps_write_control_file(
+#'   file = f, data_file = "data.dat", n_items = 3, item1 = 7,
+#'   estimation = list(RCONV = 0.5)
+#' )
+#' grep("CONV", readLines(f), value = TRUE)
+#'
+#' unlink(f)
 #' @export
 winsteps_write_control_file <- function(file,
                                          data_file,

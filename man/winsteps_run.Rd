@@ -29,3 +29,13 @@ A hand-written \code{.bat} without that leading \code{cd} will resolve its contr
 file and write its output relative to whatever the current directory
 happens to be.
 }
+\examples{
+\dontrun{
+# Winsteps runs on Windows only, so this cannot be executed here.
+options(winstepsR.exe_path = "C:/Winsteps/Winsteps.exe")
+
+bat <- file.path(tempdir(), "run.bat")
+winsteps_write_bat(bat, "control.ctr", "OUT.csv")
+winsteps_run(bat)
+}
+}
