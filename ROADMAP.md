@@ -100,13 +100,16 @@ correctly anchored run is installed at `inst/extdata/example_domain1_*`, and
 the tests check the item reader against it: item names, `ENTRY` numbering,
 `MEASURE` equal to the supplied anchors, and displacement under half a logit.
 
-Still to collect, from the same run that produced those: the full-run
-`example_full_person.out`, `example_full_item.out`, `example_full_report.csv`
-and `example_full_data.dat`. The script already wrote them to `inst/extdata`
-on the Windows machine; they simply have not been transferred. The report file
-is the only one of the four that covers anything untested -- it is the only
-real `TFILE=` output available, and `print.winsteps_report()` and
-`summary.winsteps_report()` have never been exercised against one.
+**Complete, 8 Sep 2026.** Both runs are installed: `example_full_*` (all 12
+items, with the `TFILE=17.1` report) and `example_domain1_*` (domain 1 via
+`IDFILE`). Every reader in the package is now tested against real Winsteps
+output, including `print.winsteps_report()` and `summary.winsteps_report()`,
+which had never seen a real batch report -- its heading line turns out to be
+partly overwritten by Winsteps, and the table detection handles it.
+
+A round-trip test also pins `example_full_data.dat` against what the writers
+produce today, so the shipped fixtures cannot drift from the package that
+generated them without a test failing.
 
 **Original description.**
 `inst/extdata/example_responses.csv` and `example_anchors.csv` hold a worked

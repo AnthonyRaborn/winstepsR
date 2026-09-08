@@ -72,6 +72,16 @@ cases into errors at the point the bad input arrives.
   input rows silently reordered the response columns. Documented accurately,
   with a stronger recommendation to pass `item_order` explicitly.
 
+## Example data and fixtures
+
+* The package ships a worked example -- 200 persons, 12 items in two
+  interleaved domains -- together with genuine Winsteps output for two anchored
+  runs against it: the full item set (with a `TFILE=17.1` report) and a domain
+  subset via `IDFILE`. Every reader is now tested against real output rather
+  than a reconstruction of the file formats, and a round-trip test pins the
+  shipped data file against what the writers produce, so the fixtures cannot
+  drift from the package silently.
+
 ## Item output
 
 * `winsteps_estimate()` writes the item names as control-file labels, so item

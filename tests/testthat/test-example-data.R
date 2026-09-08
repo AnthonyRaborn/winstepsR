@@ -137,3 +137,79 @@ test_that("the example delete file matches the interleaved domains", {
   expect_equal(sub(".*\t", "", deleted),
                c("q02", "q04", "q06", "q08", "q10", "q12"))
 })
+
+test_that("the full-run item output shows correctly applied anchors", {
+  f <- system.file("extdata", "example_full_item.out", package = "winstepsR")
+  skip_if(f == "", "full item output not installed")
+  items <- winsteps_read_item_output(f)
+  anchor_tbl <- utils::read.csv(
+    system.file("extdata", "example_anchors.csv", package = "winstepsR"),
+    colClasses = c("character", "numeric", "character")
+  )
+
+  expect_equal(nrow(items), 12)
+  expect_equal(items$NAME, anchor_tbl$item)
+  expect_equal(items$ENTRY, seq_len(12))
+  # MEASURE is the supplied anchor, exactly -- the anchors were not re-estimated
+  expect_equal(items$MEASURE, anchor_tbl$value)
+  # displacement stays well inside a logit on a well-fitting anchored run
+  expect_lt(max(abs(items$DISPL)), 0.6)
+})
+
+test_that("the full-run person output covers every score from zero to perfect", {
+  f <- system.file("extdata", "example_full_person.out", package = "winstepsR")
+  skip_if(f == "", "full person output not installed")
+  persons <- winsteps_read_person_output(f)
+
+  expect_equal(nrow(persons), 200)
+  expect_equal(ncol(persons), 21)
+  expect_type(persons$NAME, "character")
+  expect_equal(range(persons$SCORE), c(0, 12))
+  # persons who skipped items answered fewer than 12
+  expect_true(any(persons$COUNT < 12))
+})
+
+test_that("a real Winsteps batch report is recognised as a table", {
+  # The only real TFILE= output available. Its heading line is partly
+  # overwritten by Winsteps -- "...Rtmpuk OUT.csvs Sep 08 2026 12:29mple_full\\c"
+  # -- so it also exercises table detection against a mangled header.
+  f <- system.file("extdata", "example_full_report.csv", package = "winstepsR")
+  skip_if(f == "", "example report not installed")
+  report <- winsteps_read_report(f)
+
+  expect_s3_class(report, "winsteps_report")
+  expect_length(report, 215)
+
+  tables <- summary(report)
+  expect_equal(nrow(tables), 1)
+  expect_equal(tables$table, "17.1")
+  expect_equal(tables$start, 1L)
+  expect_equal(tables$lines, 215L)
+
+  # 215 lines summarise to a handful
+  out <- capture.output(print(report))
+  expect_match(out[1], "215 lines from 1 table")
+  expect_lt(length(out), 10)
+
+  # and it still behaves as a character vector
+  expect_true(is.character(report))
+  expect_equal(sum(grepl("MINIMUM MEASURE", report)), 2)
+})
+
+test_that("the shipped data file matches what the writers produce today", {
+  # Guards against the package drifting from the run that produced the output.
+  f <- system.file("extdata", "example_full_data.dat", package = "winstepsR")
+  resp_path <- system.file("extdata", "example_responses.csv", package = "winstepsR")
+  skip_if(f == "" || resp_path == "", "example files not installed")
+
+  responses <- utils::read.csv(resp_path,
+                               colClasses = c("character", "character", "integer"))
+  anchor_tbl <- utils::read.csv(
+    system.file("extdata", "example_anchors.csv", package = "winstepsR"),
+    colClasses = c("character", "numeric", "character")
+  )
+  prepared <- winsteps_prepare_person_data(
+    responses, "person_id", "item", "score", item_order = anchor_tbl$item
+  )
+  expect_equal(prepared$lines, readLines(f))
+})
