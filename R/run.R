@@ -70,11 +70,14 @@ winsteps_run <- function(bat_file, wait = TRUE, error_on_failure = TRUE) {
     )
   }
   bat_file <- normalizePath(bat_file, mustWork = TRUE)
-  run_dir <- dirname(bat_file)
-  old_wd <- setwd(run_dir)
+  old_wd <- setwd(dirname(bat_file))
   on.exit(setwd(old_wd), add = TRUE)
 
-  status <- shell(basename(bat_file), wait = wait, intern = FALSE)
+  # Called via do.call() rather than directly: shell() exists only in base R
+  # on Windows, so a direct call is an undefined global everywhere else and
+  # static analysis flags it. The platform guard above means this line is only
+  # ever reached where shell() does exist.
+  status <- do.call("shell", list(basename(bat_file), wait = wait, intern = FALSE))
   if (isTRUE(error_on_failure) && isTRUE(wait)) {
     winsteps_stop_on_status(status, bat_file)
   }
