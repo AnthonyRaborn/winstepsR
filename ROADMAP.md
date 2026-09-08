@@ -30,11 +30,11 @@ one: every `.bat` generated off Windows for the documented `run = FALSE`
 handoff was unusable on arrival. Fixed in 7572027 and now verified against a
 real `cmd.exe`.
 
-**W4 -- partly settled, 8 Sep 2026.** LF-only line endings make no difference
-to the **control file**: Winsteps produced identical output from `control.ctr`
-and an LF-converted copy. The `.bat` and `.dat` were not tested, and the `.bat`
-is the more exacting case since `cmd.exe` is fussier than Winsteps' own control
-parser. No CRLF work is warranted unless that turns up something.
+**W4 -- settled, 8 Sep 2026.** Line endings do not matter. Winsteps produced
+identical output from `control.ctr` and an LF-converted copy, and the
+self-locating `.bat` behaved the same with and without a trailing blank line.
+No CRLF handling is needed, so files can keep being written with whatever
+`writeLines()` produces on the generating host.
 
 ### Settled, second round (8 Sep 2026)
 
@@ -86,15 +86,21 @@ does come back as character. The read-output tests now use this column set.
 
 ### Open
 
-| | Question | What it changes |
-|---|---|---|
-| W4b | Do LF endings matter to the `.bat` and `.dat`? | Remainder of W4; the control file is already known to tolerate them |
+Nothing. Every question that needed a Winsteps install has been answered.
 
-Still worth collecting: a raw `person.out` and a raw `OUT.csv` kept as files,
-rather than their parsed contents. The column set above was recovered from a
-printed tibble; the actual header lines and column spacing are still
-unverified, and vignettes need static output they can show without running
-Winsteps.
+**Fixtures obtained.** A real PFILE is now installed at
+`inst/extdata/pfile_example.out` and the read-output tests run against it
+instead of a reconstruction. Parsing it required no changes -- the leading
+comment line, the `;`-commented column-name line, values written without a
+leading zero (`.72`), the trailing blank line and the 21-column layout are all
+handled by the existing code.
+
+**One fixture still worth having.** The installed PFILE came from the W2 probe,
+so its measures are the product of a deliberately malformed data file and must
+never be shown as an example of a correct run. A PFILE and a populated
+`OUT.csv` from a *clean* anchored run -- ideally with
+`control_args = list(tfile = "17.1")` so the report is non-empty -- would give
+the vignettes something honest to display. Not blocking anything else.
 
 ---
 

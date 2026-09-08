@@ -47,6 +47,12 @@ cases into errors at the point the bad input arrives.
   case the `run_id` design exists for -- clobber one another's working
   directory. A hand-written `.bat` without that leading `cd` will now resolve
   its control file relative to the current directory instead.
+* Parsing is now tested against a real Winsteps PFILE, installed at
+  `inst/extdata/pfile_example.out`, rather than a reconstruction of the format.
+  No code changes were needed: Winsteps' leading comment line, its
+  `;`-commented column-name line, values written without a leading zero
+  (`.72`), the trailing blank line and the full 21-column layout were all
+  already handled.
 * `winsteps_read_person_output()` strips the leading `;` from the first column
   name. Winsteps comments out its own column-name line, so the column
   previously arrived as `` `;ENTRY` `` and needed backticks to reach.

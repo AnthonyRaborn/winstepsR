@@ -185,3 +185,51 @@ test_that("the comment marker is stripped from the first column name", {
   expect_equal(out$NAME, c("001", "002"))
   expect_equal(ncol(out), 21)
 })
+
+test_that("a real Winsteps PFILE parses correctly", {
+  # A genuine PFILE from a Windows run (see inst/extdata/README.md). Its
+  # measures are not a valid estimation -- it came from the W2 probe, which
+  # deliberately fed Winsteps a malformed data file -- but its *layout* is
+  # exactly what Winsteps writes, which is what this test is for.
+  f <- system.file("extdata", "pfile_example.out", package = "winstepsR")
+  skip_if(f == "", "example PFILE not installed")
+  out <- winsteps_read_person_output(f)
+
+  expect_equal(nrow(out), 2)
+  expect_equal(ncol(out), 21)
+
+  # the comment marker Winsteps puts on its column-name line is stripped
+  expect_equal(names(out)[1], "ENTRY")
+  expect_false(any(grepl("^;", names(out))))
+  expect_equal(
+    names(out),
+    c("ENTRY", "MEASURE", "ST", "COUNT", "SCORE", "MODLSE", "IN.MSQ", "INZSTD",
+      "OUTMSQ", "OUTZST", "DISPL", "PTMA", "WEIGHT", "OBSMA", "EXPMA", "PMA-E",
+      "RMSR", "WMLE", "INDF", "OUTDF", "NAME")
+  )
+
+  # Winsteps writes values without a leading zero (".72", "-.72"); they must
+  # still arrive as numbers, not text
+  expect_type(out$MEASURE, "double")
+  expect_equal(out$MEASURE, c(0.72, -0.72))
+  expect_equal(out$PTMA, c(0.87, 0))
+
+  # person IDs keep their leading zeros and stay character
+  expect_type(out$NAME, "character")
+  expect_equal(out$NAME, c("001", "002"))
+
+  # the trailing blank line does not become a row
+  expect_equal(out$ENTRY, c(1, 2))
+})
+
+test_that("an existing but empty report file reads as an empty report", {
+  # Winsteps writes a zero-byte batch report when no TFILE= is requested.
+  tmp <- tempfile()
+  file.create(tmp)
+  on.exit(unlink(tmp))
+
+  out <- winsteps_read_report(tmp)
+  expect_s3_class(out, "winsteps_report")
+  expect_length(out, 0)
+  expect_match(capture.output(print(out))[1], "0 lines")
+})
