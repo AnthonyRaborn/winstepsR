@@ -38,6 +38,19 @@ cases into errors at the point the bad input arrives.
 * `IAFILE`/`IDFILE`/`PFILE` paths containing whitespace are quoted; paths
   without whitespace are written exactly as before.
 
+## Structure
+
+* Validation moved into a shared internal vocabulary (`R/validate.R`), so each
+  exported function opens with a short list of what it refuses instead of
+  inline error construction. `winsteps_prepare_person_data()` is about half its
+  previous length as a result.
+* `winsteps_prepare_person_data()` returns a classed `winsteps_person_data`
+  object that prints the fixed-width layout -- which columns hold the ID, the
+  delimiter and the responses -- instead of dumping every person's response
+  line at the console.
+* `winsteps_estimate()` delegates its file paths and its read-back step to
+  internal helpers, so its body reads as prepare, write, run, read.
+
 ## Documentation
 
 * `?winstepsR` package documentation, runnable examples on

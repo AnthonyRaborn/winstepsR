@@ -106,86 +106,95 @@ winsteps_estimate <- function(data,
     item_order = items
   )
 
-  data_file <- file.path(run_dir, "data.dat")
-  anchor_file <- file.path(run_dir, "anchor.txt")
-  control_file <- file.path(run_dir, "control.ctr")
-  bat_file <- file.path(run_dir, "run.bat")
-  person_file <- file.path(run_dir, "person.out")
-  report_file <- file.path(run_dir, "OUT.csv")
+  paths <- winsteps_run_paths(run_dir, subset = !is.null(keep_items))
 
-  winsteps_write_person_data(prepared, data_file)
-  winsteps_write_anchor_file(items, anchor_values, anchor_file)
-
-  delete_file <- NULL
-  if (!is.null(keep_items)) {
-    delete_file <- file.path(run_dir, "delete.txt")
-    winsteps_write_item_subset_file(items, keep = keep_items, file = delete_file)
+  winsteps_write_person_data(prepared, paths$data_file)
+  winsteps_write_anchor_file(items, anchor_values, paths$anchor_file)
+  if (!is.null(paths$delete_file)) {
+    winsteps_write_item_subset_file(items, keep = keep_items, file = paths$delete_file)
   }
 
-  control_call_args <- c(
+  do.call(winsteps_write_control_file, c(
     list(
-      file = control_file,
-      data_file = basename(data_file),
+      file = paths$control_file,
+      data_file = basename(paths$data_file),
       n_items = prepared$n_items,
       item1 = prepared$item1,
       # Passed explicitly rather than left to the control file's derived
       # default: the person name field is exactly the ID field, whatever
       # delimiter width was used.
       namlen = prepared$id_width,
-      iafile = basename(anchor_file),
-      idfile = if (!is.null(delete_file)) basename(delete_file) else NULL,
-      pfile = basename(person_file)
+      iafile = basename(paths$anchor_file),
+      idfile = if (!is.null(paths$delete_file)) basename(paths$delete_file) else NULL,
+      pfile = basename(paths$person_file)
     ),
     control_args
-  )
-  do.call(winsteps_write_control_file, control_call_args)
+  ))
 
   winsteps_write_bat(
-    file = bat_file,
-    control_file = basename(control_file),
-    out_file = basename(report_file),
+    file = paths$bat_file,
+    control_file = basename(paths$control_file),
+    out_file = basename(paths$report_file),
     winsteps_exe = winsteps_exe
   )
 
-  result <- list(
-    data_file = data_file,
-    anchor_file = anchor_file,
-    delete_file = delete_file,
-    control_file = control_file,
-    bat_file = bat_file,
-    person_file = person_file,
-    report_file = report_file
-  )
-
-  result$contents <- list(
-    data = readLines(data_file, warn = FALSE),
-    anchor = readLines(anchor_file, warn = FALSE),
-    delete = if (!is.null(delete_file)) readLines(delete_file, warn = FALSE) else NULL,
-    control = readLines(control_file, warn = FALSE),
-    bat = readLines(bat_file, warn = FALSE)
-  )
+  result <- paths
+  result$contents <- winsteps_read_back(paths)
 
   if (run) {
     # Errors on a non-zero exit status, so a crashed run cannot be mistaken
     # downstream for a cohort with no eligible persons.
-    winsteps_run(bat_file)
+    winsteps_run(paths$bat_file)
 
     # A run that succeeded but wrote no PFILE at all is a failure, not an empty
     # cohort: Winsteps writes at least a header line when it estimates nobody.
     # A header-only PFILE is still the legitimate empty case and stays a
     # zero-row result, so only the missing-file case is treated as an error.
-    if (!file.exists(person_file)) {
+    if (!file.exists(paths$person_file)) {
       stop(
         "Winsteps reported success but wrote no person output file: ",
-        person_file, ". Check the control file (PFILE=) and the run directory: ",
-        run_dir,
+        paths$person_file,
+        ". Check the control file (PFILE=) and the run directory: ", run_dir,
         call. = FALSE
       )
     }
-    result$results <- winsteps_read_person_output(person_file)
-    result$contents$person <- readLines(person_file, warn = FALSE)
-    result$contents$report <- winsteps_read_report(report_file)
+    result$results <- winsteps_read_person_output(paths$person_file)
+    result$contents$person <- readLines(paths$person_file, warn = FALSE)
+    result$contents$report <- winsteps_read_report(paths$report_file)
   }
 
   result
+}
+
+# The fixed set of files a run reads and writes, all inside its own directory.
+#
+# Named separately from winsteps_estimate() so the wrapper's body reads as a
+# sequence of steps rather than a block of path arithmetic, and so the file
+# names live in exactly one place.
+winsteps_run_paths <- function(run_dir, subset = FALSE) {
+  list(
+    data_file    = file.path(run_dir, "data.dat"),
+    anchor_file  = file.path(run_dir, "anchor.txt"),
+    delete_file  = if (subset) file.path(run_dir, "delete.txt") else NULL,
+    control_file = file.path(run_dir, "control.ctr"),
+    bat_file     = file.path(run_dir, "run.bat"),
+    person_file  = file.path(run_dir, "person.out"),
+    report_file  = file.path(run_dir, "OUT.csv")
+  )
+}
+
+# Read back what was just written.
+#
+# Deliberately read from disk rather than kept from memory: working_dir
+# defaults to a temp directory the OS may clear, and reading back confirms what
+# actually landed on disk for a format with no validation on the far side.
+winsteps_read_back <- function(paths) {
+  read_or_null <- function(f) if (!is.null(f) && file.exists(f)) readLines(f, warn = FALSE) else NULL
+  list(
+    data    = read_or_null(paths$data_file),
+    anchor  = read_or_null(paths$anchor_file),
+    delete  = read_or_null(paths$delete_file),
+    control = read_or_null(paths$control_file),
+    bat     = read_or_null(paths$bat_file)
+  )
 }

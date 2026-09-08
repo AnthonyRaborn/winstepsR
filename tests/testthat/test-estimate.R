@@ -186,3 +186,13 @@ test_that("control_args still accepts arguments the wrapper does not derive", {
   expect_true("XWIDE=1;" %in% result$contents$control)
   expect_true("TFILE=*" %in% result$contents$control)
 })
+
+test_that("run paths live in one place and only include a delete file when needed", {
+  paths <- winstepsR:::winsteps_run_paths("/tmp/run1")
+  expect_null(paths$delete_file)
+  expect_equal(basename(paths$control_file), "control.ctr")
+  expect_true(all(dirname(unlist(paths)) == "/tmp/run1"))
+
+  subset_paths <- winstepsR:::winsteps_run_paths("/tmp/run1", subset = TRUE)
+  expect_equal(basename(subset_paths$delete_file), "delete.txt")
+})
