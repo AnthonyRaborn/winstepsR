@@ -1,6 +1,6 @@
 # winstepsR
 
-A small, organization-agnostic interface between R and [Winsteps](https://www.winsteps.com/)
+A small, organization-agnostic interface between R and [Winsteps](https://www.winsteps.com/index.htm)
 (Rasch measurement software). It handles the mechanical part of the R–Winsteps
 handoff: writing Winsteps' fixed-format person-data file, item anchor file,
 and control file from data you already have in R; running Winsteps in batch
@@ -170,8 +170,12 @@ each of which can be used independently for more custom workflows:
 - **Column naming from Winsteps output is left as-is** (`NAME`, `MEASURE`,
   `COUNT`, `SCORE`, ...); rename downstream in your own project, since what
   those columns should be called is project-specific.
-- Leading zeros in numeric-looking person IDs can be dropped when Winsteps'
-  output is parsed as a table (this bit the original project too — see its
-  `daily-score-check-source.R` notes). If your IDs are numeric-looking,
-  consider keeping a separate ID-to-RegID lookup rather than relying on
-  round-tripping IDs through Winsteps' NAME column.
+- **Person IDs come back as text.** `winsteps_read_person_output()` forces the
+  `NAME` column to character, so leading zeros survive and the column's type
+  does not change between runs. Left to type guessing, `NAME` would come back
+  as character for IDs like `00123` but numeric for IDs like `123` — a
+  downstream join on that column would then work every day until the day a
+  cohort's IDs all happened to lack leading zeros. That said, round-tripping
+  IDs through Winsteps still costs you anything Winsteps' own fixed-width
+  `NAMLEN` field cannot hold, so a separate ID lookup remains the safer choice
+  for long or structured identifiers.

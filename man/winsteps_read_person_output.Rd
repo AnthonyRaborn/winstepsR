@@ -4,17 +4,24 @@
 \alias{winsteps_read_person_output}
 \title{Read a Winsteps person output file (PFILE) into a tibble}
 \usage{
-winsteps_read_person_output(file, empty_ok = TRUE)
+winsteps_read_person_output(file, empty_ok = TRUE, col_types = NULL)
 }
 \arguments{
 \item{file}{Path to the PFILE.}
 
 \item{empty_ok}{If \code{TRUE} (default), a missing file or a file with no
 data rows returns a zero-row tibble instead of raising an error.}
+
+\item{col_types}{Optional \code{\link[readr:cols]{readr::cols()}} specification passed to
+\code{\link[readr:read_table]{readr::read_table()}}. If \code{NULL} (default), types are guessed except for
+\code{NAME}, which is forced to character.}
 }
 \value{
 A tibble of person output. Zero rows if \code{empty_ok} and the file
-has no data.
+has no data. A PFILE that still carries its column-name line returns the
+full set of columns with zero rows; the column-less tibble is returned
+only when there is no column-name line to read (a missing file, or one
+holding nothing but its leading comment).
 }
 \description{
 Winsteps writes a one-line comment header followed by a whitespace-
@@ -28,4 +35,10 @@ If Winsteps found no eligible persons to estimate, the PFILE will
 contain only the header line (or not exist at all, depending on how it
 was pre-seeded). By default this is treated as "zero rows" rather than
 an error, since that is a normal outcome, not a failure.
+
+\code{NAME} is always read as text. Left to type guessing it comes back as
+character for IDs like \code{00123} but numeric for IDs like \code{123}, so the same
+code would return a different type for the same column depending only on
+which persons happened to be in the run -- and any downstream join on that
+column would break on the day the types flipped.
 }
