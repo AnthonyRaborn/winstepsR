@@ -30,3 +30,46 @@ test_that("write_item_subset_file errors when keep contains unknown items", {
     "not present in items"
   )
 })
+
+test_that("write_anchor_file rejects non-finite anchor values", {
+  # C6: NA used to be written literally as the text "NA", leaving the item
+  # unanchored without any error.
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  expect_error(
+    winsteps_write_anchor_file(c("A", "B"), c(-0.5, NA), tmp),
+    "must all be finite"
+  )
+  expect_error(
+    winsteps_write_anchor_file(c("A", "B"), c(-0.5, Inf), tmp),
+    "must all be finite"
+  )
+  # the offending item is named
+  expect_error(
+    winsteps_write_anchor_file(c("A", "B"), c(-0.5, NA), tmp),
+    "B"
+  )
+})
+
+test_that("item vectors must be unique across the anchor and subset writers", {
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  expect_error(
+    winsteps_write_anchor_file(c("A", "B", "A"), c(1, 2, 3), tmp),
+    "items must be unique"
+  )
+  expect_error(
+    winsteps_write_item_subset_file(c("A", "B", "A"), keep = "B", file = tmp),
+    "items must be unique"
+  )
+})
+
+test_that("write_item_subset_file rejects an empty keep set", {
+  # R7: an empty keep set used to delete every item silently.
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  expect_error(
+    winsteps_write_item_subset_file(c("A", "B"), keep = character(0), file = tmp),
+    "would delete every item"
+  )
+})

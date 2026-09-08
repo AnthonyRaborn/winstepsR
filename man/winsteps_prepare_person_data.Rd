@@ -17,7 +17,8 @@ winsteps_prepare_person_data(
 }
 \arguments{
 \item{data}{A data frame in long format with one row per person-item
-response.}
+response. Must have at least one row, and at most one row per
+person-item pair.}
 
 \item{id_col}{Name of the person identifier column in \code{data}.}
 

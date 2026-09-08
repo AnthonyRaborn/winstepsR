@@ -11,7 +11,8 @@ winsteps_write_anchor_file(items, values, file, digits = NULL)
 build the data file (see \code{items} in \code{\link[=winsteps_prepare_person_data]{winsteps_prepare_person_data()}}).}
 
 \item{values}{Numeric vector of anchor values (e.g. IRT b-parameters),
-same length and order as \code{items}.}
+same length and order as \code{items}. Must all be finite -- a missing anchor
+would be written literally and silently leave that item unanchored.}
 
 \item{file}{Path to write the anchor file to.}
 

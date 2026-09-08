@@ -12,7 +12,7 @@ the anchor/data files (i.e. sequence number = position in \code{items}).}
 
 \item{keep}{Character vector of item names to \emph{retain} for this
 estimation run; every other item in \code{items} is written to the delete
-file.}
+file. Must be non-empty.}
 
 \item{file}{Path to write the delete file to.}
 }

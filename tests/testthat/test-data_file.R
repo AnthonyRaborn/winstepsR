@@ -79,3 +79,39 @@ test_that("prepare_person_data still accepts ordinary single-character codes", {
   )
   expect_equal(prepared$lines, c("1*10", "2*2."))
 })
+
+test_that("prepare_person_data rejects zero-row input", {
+  # C5: an empty cohort used to yield id_width/item1 of -Inf and one
+  # delimiter-only line for a person who does not exist.
+  data <- data.frame(id = character(0), item = character(0), score = numeric(0))
+  expect_error(
+    winsteps_prepare_person_data(data, "id", "item", "score"),
+    "no rows"
+  )
+})
+
+test_that("prepare_person_data names the duplicated person and item", {
+  # R6: this used to fail inside vctrs with a message naming neither.
+  data <- data.frame(
+    id = c("1", "1", "1"),
+    item = c("A", "A", "B"),
+    score = c(1, 0, 1)
+  )
+  expect_error(
+    winsteps_prepare_person_data(data, "id", "item", "score"),
+    "more than one response"
+  )
+  expect_error(
+    winsteps_prepare_person_data(data, "id", "item", "score"),
+    "1/A"
+  )
+})
+
+test_that("prepare_person_data rejects a duplicated item_order", {
+  data <- data.frame(id = c("1", "1"), item = c("A", "B"), score = c(1, 0))
+  expect_error(
+    winsteps_prepare_person_data(data, "id", "item", "score",
+                                 item_order = c("A", "B", "A")),
+    "items must be unique"
+  )
+})

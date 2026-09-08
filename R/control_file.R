@@ -63,6 +63,20 @@ winsteps_write_control_file <- function(file,
                                          estimation = list(),
                                          tfile = NULL,
                                          extra = character(0)) {
+  # These three index character positions and item counts in the data file;
+  # anything non-positive is a programmer error that Winsteps would accept
+  # without complaint and then misread.
+  check_position <- function(x, nm) {
+    if (length(x) != 1 || is.na(x) || !is.numeric(x) || x < 1 || x != as.integer(x)) {
+      stop(nm, " must be a single positive whole number, not: ",
+           paste(format(x), collapse = ", "), call. = FALSE)
+    }
+  }
+  check_position(n_items, "n_items")
+  check_position(item1, "item1")
+  check_position(name1, "name1")
+  check_position(namlen, "namlen")
+
   if (!is.null(item_labels) && length(item_labels) != n_items) {
     stop("item_labels must have length n_items (", n_items, ")", call. = FALSE)
   }

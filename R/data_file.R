@@ -13,7 +13,8 @@
 #' this function does not implement -- recode to single characters first.
 #'
 #' @param data A data frame in long format with one row per person-item
-#'   response.
+#'   response. Must have at least one row, and at most one row per
+#'   person-item pair.
 #' @param id_col Name of the person identifier column in `data`.
 #' @param item_col Name of the item identifier column in `data`.
 #' @param score_col Name of the (numeric-coercible) score column in `data`.
@@ -55,6 +56,14 @@ winsteps_prepare_person_data <- function(data,
   }
   if (nchar(delimiter) < 1) stop("delimiter must be at least one character", call. = FALSE)
 
+  if (nrow(data) == 0) {
+    # An empty cohort cannot produce a valid layout: id_width would be -Inf and
+    # paste0() would still emit one delimiter-only line for a person who does
+    # not exist. Whether an empty day is normal is the caller's call, not ours.
+    stop("data has no rows, so no Winsteps person data can be written. ",
+         "Handle the empty case before calling.", call. = FALSE)
+  }
+
   long <- data[, c(id_col, item_col, score_col)]
   names(long) <- c("id", "item", "score")
   long$id <- as.character(long$id)
@@ -81,6 +90,17 @@ winsteps_prepare_person_data <- function(data,
          "10 to \"A\") before calling.", call. = FALSE)
   }
 
+  # pivot_wider() fails on duplicates from deep inside vctrs with a message that
+  # names neither the person nor the item, so catch them here instead.
+  dup_key <- duplicated(long[, c("id", "item")])
+  if (any(dup_key)) {
+    d <- unique(long[dup_key, c("id", "item")])
+    stop("data has more than one response for the same person and item: ",
+         paste(utils::head(paste0(d$id, "/", d$item), 5), collapse = ", "),
+         if (nrow(d) > 5) ", ..." else "",
+         ". De-duplicate before calling.", call. = FALSE)
+  }
+
   wide <- tidyr::pivot_wider(
     long,
     id_cols = "id",
@@ -92,6 +112,7 @@ winsteps_prepare_person_data <- function(data,
   if (is.null(item_order)) {
     item_order <- setdiff(names(wide), "id")
   } else {
+    winsteps_check_items(item_order)
     missing_items <- setdiff(item_order, setdiff(names(wide), "id"))
     if (length(missing_items) > 0) {
       stop("item_order contains items not present in data: ",

@@ -98,3 +98,27 @@ test_that("write_control_file errors when item_labels length mismatches n_items"
     "item_labels"
   )
 })
+
+test_that("write_control_file rejects non-positive layout positions", {
+  # R4: NI=-5 and ITEM1=0 used to be written without complaint.
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  expect_error(
+    winsteps_write_control_file(tmp, "d.dat", n_items = -5, item1 = 11),
+    "n_items must be a single positive whole number"
+  )
+  expect_error(
+    winsteps_write_control_file(tmp, "d.dat", n_items = 4, item1 = 0),
+    "item1 must be a single positive whole number"
+  )
+  expect_error(
+    winsteps_write_control_file(tmp, "d.dat", n_items = 4, item1 = 11, name1 = NA),
+    "name1 must be a single positive whole number"
+  )
+  # namlen is derived, so a name1/item1 pair that implies a zero-width ID
+  # is caught too
+  expect_error(
+    winsteps_write_control_file(tmp, "d.dat", n_items = 4, item1 = 2, name1 = 1),
+    "namlen must be a single positive whole number"
+  )
+})
