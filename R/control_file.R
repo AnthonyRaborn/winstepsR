@@ -31,6 +31,10 @@
 #' @param idfile Optional path for `IDFILE=` (item subset/delete file).
 #' @param pfile Path for `PFILE=`, the person output file Winsteps will
 #'   write. Defaults to `"person.out"`.
+#' @param ifile Optional path for `IFILE=`, the item output file. Worth
+#'   requesting even on an anchored run: its displacement column is the
+#'   evidence that the anchors were applied rather than re-estimated. See
+#'   [winsteps_read_item_output()].
 #' @param item_labels Optional character vector of item labels to list
 #'   after `&END`. If supplied, must have length `n_items` and be in
 #'   data-file column order.
@@ -65,6 +69,7 @@ winsteps_write_control_file <- function(file,
                                          iafile = NULL,
                                          idfile = NULL,
                                          pfile = "person.out",
+                                         ifile = NULL,
                                          item_labels = NULL,
                                          estimation = list(),
                                          tfile = NULL,
@@ -136,6 +141,7 @@ winsteps_write_control_file <- function(file,
     paste0("ITEM1=", item1, ";"),
     paste0("NI=", n_items, ";"),
     paste0("PFILE=", quote_if_needed(pfile), ";"),
+    if (!is.null(ifile)) paste0("IFILE=", quote_if_needed(ifile), ";"),
     extra,
     "&END"
   )

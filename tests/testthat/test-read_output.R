@@ -233,3 +233,53 @@ test_that("an existing but empty report file reads as an empty report", {
   expect_length(out, 0)
   expect_match(capture.output(print(out))[1], "0 lines")
 })
+
+test_that("read_item_output parses the same layout as the person file", {
+  # IFILE and PFILE share a format. No real IFILE fixture exists yet, so this
+  # is built from the layout the real PFILE confirmed.
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  writeLines(
+    c("; ITEM  C:\\\\temp\\\\control.ctr  Sep 08 2026 11:19",
+      ";ENTRY MEASURE ST COUNT SCORE MODLSE IN.MSQ DISPL NAME",
+      "     1    -.50  1   2.0   1.0   1.25    .73   .00 A",
+      "     2     .00  1   2.0   1.0   1.25   1.09  -.02 B",
+      "     3     .50  1   2.0   2.0   1.25    .88   .01 C"),
+    tmp
+  )
+  out <- winsteps_read_item_output(tmp)
+
+  expect_equal(nrow(out), 3)
+  expect_equal(names(out)[1], "ENTRY")
+  expect_equal(out$MEASURE, c(-0.5, 0, 0.5))
+  # DISPL is the anchor-verification column
+  expect_equal(out$DISPL, c(0, -0.02, 0.01))
+  # item names stay character, for the same reason person IDs do
+  expect_type(out$NAME, "character")
+  expect_equal(out$NAME, c("A", "B", "C"))
+})
+
+test_that("read_item_output handles missing and empty files like the person reader", {
+  expect_equal(nrow(winsteps_read_item_output(tempfile())), 0)
+  expect_error(
+    winsteps_read_item_output(tempfile(), empty_ok = FALSE),
+    "item output file not found"
+  )
+
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  writeLines("; ITEM header only", tmp)
+  expect_equal(nrow(winsteps_read_item_output(tmp)), 0)
+  expect_error(winsteps_read_item_output(tmp, empty_ok = FALSE), "no data rows")
+})
+
+test_that("numeric-looking item names stay character", {
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  writeLines(
+    c("; ITEM", ";ENTRY MEASURE NAME", "1 -.5 101", "2 .5 102"),
+    tmp
+  )
+  expect_type(winsteps_read_item_output(tmp)$NAME, "character")
+  expect_equal(winsteps_read_item_output(tmp)$NAME, c("101", "102"))
+})

@@ -95,7 +95,10 @@ comment line, the `;`-commented column-name line, values written without a
 leading zero (`.72`), the trailing blank line and the 21-column layout are all
 handled by the existing code.
 
-**One fixture still worth having.** The installed PFILE came from the W2 probe,
+**Fixtures still worth having.** An IFILE from any run, to confirm the item
+reader against real output rather than an inferred layout.
+
+The installed PFILE came from the W2 probe,
 so its measures are the product of a deliberately malformed data file and must
 never be shown as an example of a correct run. A PFILE and a populated
 `OUT.csv` from a *clean* anchored run -- ideally with
@@ -157,7 +160,7 @@ formats.
 | Plot methods | 7 `plot.*`, 3 `lines.*` | No |
 | Person ID after the responses | `name1 > item1` layouts | Only on demand |
 
-### 1a. `winsteps_read_item_output()` -- the real gap
+### 1a. `winsteps_read_item_output()` -- **done**
 
 Item output never comes back into R at all. Anchors go in, person measures come
 out, and nothing reports what Winsteps did with the anchors in between.
@@ -178,7 +181,19 @@ Shape is close to what already exists:
   format, same empty-file handling, `NAME` forced to character for the same
   reason it is there.
 
-Depends on nothing. Rank it above everything in sections 2 and 3.
+Implemented as specified: `IFILE=` in `winsteps_write_control_file()`,
+`item_file` in `winsteps_run_paths()`, `contents$item`, `result$items`, and a
+reader sharing the PFILE's parsing. `winsteps_estimate()` requests item output
+on every run rather than on request -- the displacement check is worth having
+by default -- and treats a missing IFILE after a successful run as a failure,
+the same way it treats a missing PFILE. `ifile` joins the reserved
+`control_args` names.
+
+**Untested against real output.** There is no IFILE fixture yet; the tests are
+built from the layout the real PFILE confirmed, and the two files are
+documented as sharing a format. Worth checking against a genuine IFILE at the
+next opportunity -- in particular whether the displacement column is named
+`DISPL` there as it is in the PFILE.
 
 ### 1b. `winsteps_read_control_file()`
 

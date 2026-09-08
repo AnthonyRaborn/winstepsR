@@ -16,6 +16,7 @@ winsteps_write_control_file(
   iafile = NULL,
   idfile = NULL,
   pfile = "person.out",
+  ifile = NULL,
   item_labels = NULL,
   estimation = list(),
   tfile = NULL,
@@ -59,6 +60,11 @@ correct.}
 
 \item{pfile}{Path for \verb{PFILE=}, the person output file Winsteps will
 write. Defaults to \code{"person.out"}.}
+
+\item{ifile}{Optional path for \verb{IFILE=}, the item output file. Worth
+requesting even on an anchored run: its displacement column is the
+evidence that the anchors were applied rather than re-estimated. See
+\code{\link[=winsteps_read_item_output]{winsteps_read_item_output()}}.}
 
 \item{item_labels}{Optional character vector of item labels to list
 after \verb{&END}. If supplied, must have length \code{n_items} and be in

@@ -55,7 +55,7 @@ created for this run's files. Defaults to a temp directory.}
 \code{\link[=winsteps_write_control_file]{winsteps_write_control_file()}} (e.g. \code{estimation}, \code{codes},
 \code{extra}). Cannot include arguments this function derives itself
 (\code{file}, \code{data_file}, \code{n_items}, \code{item1}, \code{namlen}, \code{iafile}, \code{idfile},
-\code{pfile}). Use \code{control_args$tfile} (e.g. \code{tfile = "17.1"}) to request
+\code{pfile}, \code{ifile}). Use \code{control_args$tfile} (e.g. \code{tfile = "17.1"}) to request
 specific Winsteps tables; their output is written to \code{report_file}
 and read back into \code{contents$report} (see below).}
 
@@ -71,7 +71,7 @@ the run rather than dumping every file it read back. Underneath it is a
 list carrying \code{run_id} and \code{run_dir}; the paths of every file written
 (\code{data_file},
 \code{anchor_file}, \code{delete_file}, \code{control_file}, \code{bat_file},
-\code{person_file}, \code{report_file}); a parallel \code{contents} list holding the
+\code{person_file}, \code{item_file}, \code{report_file}); a parallel \code{contents} list holding the
 actual lines written to each of those files (\code{contents$data},
 \code{contents$anchor}, \code{contents$delete}, \code{contents$control},
 \code{contents$bat}, and, if \code{run = TRUE}, \code{contents$person} -- the raw

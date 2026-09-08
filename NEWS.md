@@ -72,6 +72,23 @@ cases into errors at the point the bad input arrives.
   input rows silently reordered the response columns. Documented accurately,
   with a stronger recommendation to pass `item_order` explicitly.
 
+## Item output
+
+* New `winsteps_read_item_output()` reads a Winsteps `IFILE=` into a tibble,
+  sharing the PFILE's layout and its handling of empty output. Item names are
+  read as text for the same reason person IDs are.
+* `winsteps_write_control_file()` gains `ifile`, and `winsteps_estimate()`
+  requests item output on every run: `result$items` holds the tibble,
+  `result$item_file` the path and `result$contents$item` the raw lines.
+
+  This closes the one place where nothing could verify what Winsteps did with
+  the anchors. The displacement column reports the gap between the anchor value
+  supplied and the value the data implies, so it is the evidence that anchors
+  were applied rather than quietly re-estimated -- and a run whose anchor file
+  was ignored succeeds and returns plausible measures. As with the PFILE, a
+  missing IFILE after a successful run is now an error rather than an empty
+  result. What counts as excessive displacement is left to the caller.
+
 ## Methods
 
 * `summary()` on a `winsteps_result` reports the distribution of the person

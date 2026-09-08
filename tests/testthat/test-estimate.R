@@ -345,3 +345,32 @@ test_that("winsteps_run does not change the session working directory", {
   expect_error(winsteps_run(tempfile()), "only works on Windows")
   expect_equal(getwd(), before)
 })
+
+test_that("winsteps_estimate requests item output and reserves the ifile argument", {
+  data <- data.frame(
+    id = rep(c("001", "002"), each = 2),
+    item = rep(c("A", "B"), 2),
+    score = c(1, 0, 0, 1)
+  )
+  result <- winsteps_estimate(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    anchors = winsteps_anchors(c("A", "B"), c(-0.5, 0.5)),
+    run_id = "ifile_run", working_dir = tempfile(),
+    winsteps_exe = "Winsteps.exe", run = FALSE
+  )
+  expect_true("IFILE=item.out;" %in% result$contents$control)
+  expect_equal(basename(result$item_file), "item.out")
+  # not written until Winsteps runs
+  expect_null(result$items)
+  expect_null(result$contents$item)
+
+  expect_error(
+    winsteps_estimate(
+      data = data, id_col = "id", item_col = "item", score_col = "score",
+      anchors = winsteps_anchors(c("A", "B"), c(-0.5, 0.5)),
+      working_dir = tempfile(), run = FALSE,
+      control_args = list(ifile = "elsewhere.out")
+    ),
+    "control_args cannot set argument\\(s\\).*ifile"
+  )
+})

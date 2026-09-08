@@ -39,7 +39,7 @@
 #'   [winsteps_write_control_file()] (e.g. `estimation`, `codes`,
 #'   `extra`). Cannot include arguments this function derives itself
 #'   (`file`, `data_file`, `n_items`, `item1`, `namlen`, `iafile`, `idfile`,
-#'   `pfile`). Use `control_args$tfile` (e.g. `tfile = "17.1"`) to request
+#'   `pfile`, `ifile`). Use `control_args$tfile` (e.g. `tfile = "17.1"`) to request
 #'   specific Winsteps tables; their output is written to `report_file`
 #'   and read back into `contents$report` (see below).
 #' @param winsteps_exe Passed through to [winsteps_write_bat()].
@@ -76,7 +76,7 @@
 #'   list carrying `run_id` and `run_dir`; the paths of every file written
 #'   (`data_file`,
 #'   `anchor_file`, `delete_file`, `control_file`, `bat_file`,
-#'   `person_file`, `report_file`); a parallel `contents` list holding the
+#'   `person_file`, `item_file`, `report_file`); a parallel `contents` list holding the
 #'   actual lines written to each of those files (`contents$data`,
 #'   `contents$anchor`, `contents$delete`, `contents$control`,
 #'   `contents$bat`, and, if `run = TRUE`, `contents$person` -- the raw
@@ -110,7 +110,8 @@ winsteps_estimate <- function(data,
   check_run_id(run_id)
   check_no_reserved_args(
     control_args,
-    c("file", "data_file", "n_items", "item1", "namlen", "iafile", "idfile", "pfile")
+    c("file", "data_file", "n_items", "item1", "namlen", "iafile", "idfile",
+      "pfile", "ifile")
   )
 
   run_dir <- file.path(working_dir, run_id)
@@ -141,7 +142,8 @@ winsteps_estimate <- function(data,
       namlen = prepared$id_width,
       iafile = basename(paths$anchor_file),
       idfile = if (!is.null(paths$delete_file)) basename(paths$delete_file) else NULL,
-      pfile = basename(paths$person_file)
+      pfile = basename(paths$person_file),
+      ifile = basename(paths$item_file)
     ),
     control_args
   ))
@@ -175,6 +177,22 @@ winsteps_estimate <- function(data,
     }
     result$results <- winsteps_read_person_output(paths$person_file)
     result$contents$person <- readLines(paths$person_file, warn = FALSE)
+
+    # Item output is requested unconditionally, because on an anchored run it
+    # is the only evidence that the anchors were applied rather than quietly
+    # re-estimated. Treated like the PFILE: its absence after a successful run
+    # is a failure, not an empty result.
+    if (!file.exists(paths$item_file)) {
+      stop(
+        "Winsteps reported success but wrote no item output file: ",
+        paths$item_file,
+        ". Check the control file (IFILE=) and the run directory: ", run_dir,
+        call. = FALSE
+      )
+    }
+    result$items <- winsteps_read_item_output(paths$item_file)
+    result$contents$item <- readLines(paths$item_file, warn = FALSE)
+
     result$contents$report <- winsteps_read_report(paths$report_file)
   }
 
@@ -208,7 +226,7 @@ print.winsteps_result <- function(x, ...) {
   # existence check then drops the output files Winsteps has not written yet.
   candidates <- unlist(x[c("data_file", "anchor_file", "delete_file",
                            "control_file", "bat_file", "person_file",
-                           "report_file")])
+                           "item_file", "report_file")])
   field("Files", paste(basename(candidates[file.exists(candidates)]),
                        collapse = ", "))
 
@@ -217,7 +235,12 @@ print.winsteps_result <- function(x, ...) {
   if (is.null(x$results)) {
     cat("  $results   NULL (run = FALSE)\n")
   } else {
-    cat("  $results   tibble ", nrow(x$results), " x ", ncol(x$results), "\n", sep = "")
+    cat("  $results   tibble ", nrow(x$results), " x ", ncol(x$results),
+        "  (person measures)\n", sep = "")
+  }
+  if (!is.null(x$items)) {
+    cat("  $items     tibble ", nrow(x$items), " x ", ncol(x$items),
+        "  (item measures; check DISPL on anchored runs)\n", sep = "")
   }
   invisible(x)
 }
@@ -235,6 +258,7 @@ winsteps_run_paths <- function(run_dir, subset = FALSE) {
     control_file = file.path(run_dir, "control.ctr"),
     bat_file     = file.path(run_dir, "run.bat"),
     person_file  = file.path(run_dir, "person.out"),
+    item_file    = file.path(run_dir, "item.out"),
     report_file  = file.path(run_dir, "OUT.csv")
   )
 }

@@ -33,16 +33,54 @@
 #'   holding nothing but its leading comment).
 #' @export
 winsteps_read_person_output <- function(file, empty_ok = TRUE, col_types = NULL) {
+  read_winsteps_table(file, empty_ok, col_types, what = "person output")
+}
+
+#' Read a Winsteps item output file (IFILE) into a tibble
+#'
+#' The item counterpart of [winsteps_read_person_output()], in the same
+#' header-plus-table format and with the same handling of empty output. Item
+#' names are read as text for the same reason person IDs are: left to type
+#' guessing, a bank of numeric-looking item names would come back numeric for
+#' one run and character for another.
+#'
+#' Reading item output back matters even for pure anchored scoring, where the
+#' item measures are supposed to be fixed inputs rather than results. Winsteps'
+#' displacement column (`DISPL`) reports the difference between the anchor
+#' value supplied and the value the data implies. It is the direct evidence
+#' that the anchors were applied rather than quietly re-estimated -- and a run
+#' whose anchor file was ignored succeeds, returns plausible measures, and is
+#' wrong. Non-trivial displacement on an anchored run is worth investigating
+#' before the measures are used; what counts as non-trivial is a
+#' project-specific judgment this package does not make.
+#'
+#' @param file Path to the IFILE.
+#' @param empty_ok If `TRUE` (default), a missing file or a file with no data
+#'   rows returns a zero-row tibble instead of raising an error.
+#' @param col_types Optional [readr::cols()] specification passed to
+#'   [readr::read_table()]. If `NULL` (default), types are guessed except for
+#'   `NAME`, which is forced to character.
+#'
+#' @return A tibble of item output, one row per item, with the columns
+#'   Winsteps wrote.
+#' @export
+winsteps_read_item_output <- function(file, empty_ok = TRUE, col_types = NULL) {
+  read_winsteps_table(file, empty_ok, col_types, what = "item output")
+}
+
+# Shared reader for Winsteps' PFILE and IFILE, which use the same layout: a
+# comment line, a column-name line commented out with ";", then the table.
+read_winsteps_table <- function(file, empty_ok, col_types, what) {
   if (!file.exists(file)) {
     if (empty_ok) return(tibble::tibble())
-    stop("Winsteps output file not found: ", file, call. = FALSE)
+    stop("Winsteps ", what, " file not found: ", file, call. = FALSE)
   }
   # Only the first two lines are needed to decide whether there is a table and
   # to learn its column names; the file itself may be large.
   head_lines <- readLines(file, n = 2L, warn = FALSE)
   if (length(head_lines) <= 1) {
     if (empty_ok) return(tibble::tibble())
-    stop("Winsteps output file has no data rows: ", file, call. = FALSE)
+    stop("Winsteps ", what, " file has no data rows: ", file, call. = FALSE)
   }
   if (is.null(col_types)) {
     col_names <- strsplit(trimws(sub("^;", "", head_lines[2])), "[[:space:]]+")[[1]]
