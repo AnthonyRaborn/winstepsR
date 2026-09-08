@@ -1,0 +1,26 @@
+Package: winstepsR
+Title: Generate Winsteps Input Files, Run Winsteps, and Read Its Output
+Version: 0.1.0
+Authors@R: person("Anthony", "Raborn", email = "anthony@raborndecisionsciences.com", role = c("aut", "cre"))
+Description: A thin, organization-agnostic interface between R and the Rasch
+    measurement program Winsteps. Given item response data in long format
+    and a set of anchored item difficulties, winstepsR writes the Winsteps
+    person-response data file, item anchor file, and control file; runs
+    Winsteps in batch mode; and reads the resulting person output file
+    (PFILE) back into R as a tibble. It intentionally does not implement
+    any exam-specific scoring rules (scale-score conversions, penalty
+    rules, domain definitions, etc.) -- those belong in the calling
+    project, not in this package.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+Imports:
+    tidyr,
+    readr,
+    tibble,
+    utils
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
