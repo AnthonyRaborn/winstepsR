@@ -4,3 +4,4 @@
 ^\.gitignore$
 ^\.DS_Store$
 ^ROADMAP\.md$
+^data-raw$

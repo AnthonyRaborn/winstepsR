@@ -95,8 +95,19 @@ comment line, the `;`-commented column-name line, values written without a
 leading zero (`.72`), the trailing blank line and the 21-column layout are all
 handled by the existing code.
 
-**Fixtures still worth having.** An IFILE from any run, to confirm the item
-reader against real output rather than an inferred layout.
+**Example run set -- inputs done, outputs pending.**
+`inst/extdata/example_responses.csv` and `example_anchors.csv` hold a worked
+example: 30 persons, 12 items in two domains, five missing responses, one
+person at each score extreme, and responses simulated from the Rasch model
+using the difficulties that then serve as anchors, so displacement should sit
+near zero. `data-raw/make_example_data.R` regenerates them;
+`data-raw/make_example_run.R` runs Winsteps against them on Windows and copies
+the output back. Input generation is verified by `test-example-data.R`; the
+outputs are what is still missing.
+
+Once those land: the item reader gets checked against a real IFILE rather than
+an inferred layout, `summary()` gets a real distribution to demonstrate, and
+the vignettes get something honest to display.
 
 The installed PFILE came from the W2 probe,
 so its measures are the product of a deliberately malformed data file and must
