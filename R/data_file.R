@@ -62,68 +62,18 @@ winsteps_prepare_person_data <- function(data,
                                           missing_code = ".",
                                           item_order = NULL) {
   stopifnot(is.data.frame(data))
-  missing_cols <- setdiff(c(id_col, item_col, score_col), names(data))
-  if (length(missing_cols) > 0) {
-    stop("Column(s) not found in data: ", paste(missing_cols, collapse = ", "), call. = FALSE)
-  }
+  check_columns_present(data, c(id_col, item_col, score_col))
+  check_has_rows(data)
   if (nchar(delimiter) < 1) stop("delimiter must be at least one character", call. = FALSE)
-
-  if (nrow(data) == 0) {
-    # An empty cohort cannot produce a valid layout: id_width would be -Inf and
-    # paste0() would still emit one delimiter-only line for a person who does
-    # not exist. Whether an empty day is normal is the caller's call, not ours.
-    stop("data has no rows, so no Winsteps person data can be written. ",
-         "Handle the empty case before calling.", call. = FALSE)
-  }
+  check_single_char(missing_code, "missing_code")
 
   long <- data[, c(id_col, item_col, score_col)]
   names(long) <- c("id", "item", "score")
   long$id <- as.character(long$id)
-  raw_score <- long$score
-  long$score <- as.character(suppressWarnings(as.numeric(long$score)))
-  # Distinguish "was already missing" from "could not be read as a number":
-  # the second is almost always an upstream problem (a "correct"/"incorrect"
-  # column, a stray "N/A") that would otherwise become a run scoring nobody.
-  unreadable <- is.na(long$score) & !is.na(raw_score)
-  if (any(unreadable)) {
-    bad <- unique(as.character(raw_score[unreadable]))
-    warning(sum(unreadable), " response(s) could not be read as numbers and ",
-            "were written as the missing code \"", missing_code, "\": ",
-            paste(dQuote(utils::head(bad, 5), FALSE), collapse = ", "),
-            if (length(bad) > 5) ", ..." else "", call. = FALSE)
-  }
-  long$score[is.na(long$score)] <- missing_code
+  long$score <- coerce_scores(long$score, missing_code)
 
-  # The response block is built one character per item and ITEM1/NI are
-  # computed on that assumption, so a wider code would silently shift every
-  # column after it rather than failing. Winsteps' own mechanism for wider
-  # codes is XWIDE=, which this function does not implement.
-  if (nchar(missing_code) != 1L) {
-    stop("missing_code must be exactly one character, not \"", missing_code,
-         "\". Winsteps reads one character per item unless XWIDE= is set, ",
-         "which this function does not support.", call. = FALSE)
-  }
-  wide_codes <- unique(long$score[nchar(long$score) != 1L])
-  if (length(wide_codes) > 0) {
-    stop("Response codes must be exactly one character each; found ",
-         length(wide_codes), " that are not: ",
-         paste(dQuote(utils::head(wide_codes, 5), FALSE), collapse = ", "),
-         if (length(wide_codes) > 5) ", ..." else "",
-         ". Winsteps reads one character per item unless XWIDE= is set, which ",
-         "this function does not support; recode these responses (e.g. map ",
-         "10 to \"A\") before calling.", call. = FALSE)
-  }
-
-  # pivot_wider() fails on duplicates from deep inside vctrs with a message that
-  # names neither the person nor the item, so catch them here instead.
-  dup_key <- duplicated(long[, c("id", "item")])
-  if (any(dup_key)) {
-    d <- unique(long[dup_key, c("id", "item")])
-    stop("data has more than one response for the same person and item: ",
-         paste(utils::head(paste0(d$id, "/", d$item), 5), collapse = ", "),
-         if (nrow(d) > 5) ", ..." else "",
-         ". De-duplicate before calling.", call. = FALSE)
-  }
+  check_single_char_codes(long$score)
+  check_one_response_per_pair(long)
 
   wide <- tidyr::pivot_wider(
     long,
@@ -136,7 +86,7 @@ winsteps_prepare_person_data <- function(data,
   if (is.null(item_order)) {
     item_order <- setdiff(names(wide), "id")
   } else {
-    winsteps_check_items(item_order)
+    check_items(item_order)
     missing_items <- setdiff(item_order, setdiff(names(wide), "id"))
     if (length(missing_items) > 0) {
       stop("item_order contains items not present in data: ",
@@ -178,4 +128,23 @@ winsteps_write_person_data <- function(prepared, file) {
   }
   writeLines(prepared$lines, con = file)
   invisible(file)
+}
+
+# Coerce a response column to the single-character text Winsteps expects.
+#
+# Values that were already missing become the missing code silently; values
+# that merely failed to parse are almost always an upstream problem (a
+# "correct"/"incorrect" column, a stray "N/A") that would otherwise become a
+# run scoring nobody, so those warn.
+coerce_scores <- function(score, missing_code) {
+  parsed <- as.character(suppressWarnings(as.numeric(score)))
+  unreadable <- is.na(parsed) & !is.na(score)
+  if (any(unreadable)) {
+    warning(sum(unreadable), " response(s) could not be read as numbers and ",
+            "were written as the missing code \"", missing_code, "\": ",
+            format_examples(unique(score[unreadable]), quote = TRUE),
+            call. = FALSE)
+  }
+  parsed[is.na(parsed)] <- missing_code
+  parsed
 }

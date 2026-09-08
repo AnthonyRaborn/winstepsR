@@ -20,16 +20,8 @@ winsteps_write_anchor_file <- function(items, values, file, digits = NULL) {
   if (length(items) != length(values)) {
     stop("items and values must be the same length", call. = FALSE)
   }
-  winsteps_check_items(items)
-  # A non-finite anchor would be written literally (e.g. "NA"), which Winsteps
-  # cannot read as a logit; it would then estimate the item freely rather than
-  # anchoring it, so the run silently stops being the anchored run requested.
-  bad <- !is.finite(values)
-  if (any(bad)) {
-    stop("anchor values must all be finite; ", sum(bad), " are not, at item(s): ",
-         paste(utils::head(items[bad], 5), collapse = ", "),
-         if (sum(bad) > 5) ", ..." else "", call. = FALSE)
-  }
+  check_items(items)
+  check_finite_anchors(values, items)
   if (!is.null(digits)) values <- round(values, digits)
 
   out <- data.frame(
@@ -62,7 +54,7 @@ winsteps_write_anchor_file <- function(items, values, file, digits = NULL) {
 #' @return `file`, invisibly.
 #' @export
 winsteps_write_item_subset_file <- function(items, keep, file) {
-  winsteps_check_items(items)
+  check_items(items)
   if (length(keep) == 0) {
     stop("keep is empty, which would delete every item from the estimation. ",
          "Pass the items to retain, or omit the item subset file entirely.",
@@ -83,31 +75,4 @@ winsteps_write_item_subset_file <- function(items, keep, file) {
   utils::write.table(out, file = file, sep = "\t",
                       row.names = FALSE, col.names = FALSE, quote = FALSE)
   invisible(file)
-}
-
-# Shared validation for the `items` vector that indexes the anchor file, the
-# delete file and the data file by position.
-#
-# Sequence numbers are positional, so a duplicated name makes those three files
-# disagree about which sequence number an item has.
-winsteps_check_items <- function(items) {
-  if (length(items) == 0) {
-    stop("items is empty", call. = FALSE)
-  }
-  # Item names are written into tab-delimited files after a ";" comment
-  # marker, so either character would silently restructure the line.
-  structural <- grepl("[\t;]", items)
-  if (any(structural)) {
-    stop("item names must not contain tabs or semicolons, which delimit the ",
-         "anchor and subset files; offending item(s): ",
-         paste(utils::head(items[structural], 5), collapse = ", "),
-         if (sum(structural) > 5) ", ..." else "", call. = FALSE)
-  }
-  dupes <- unique(items[duplicated(items)])
-  if (length(dupes) > 0) {
-    stop("items must be unique; duplicated: ",
-         paste(utils::head(dupes, 5), collapse = ", "),
-         if (length(dupes) > 5) ", ..." else "", call. = FALSE)
-  }
-  invisible(items)
 }

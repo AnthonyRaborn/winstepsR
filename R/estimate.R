@@ -92,23 +92,11 @@ winsteps_estimate <- function(data,
                                control_args = list(),
                                winsteps_exe = getOption("winstepsR.exe_path"),
                                run = TRUE) {
-  if (length(run_id) != 1 || is.na(run_id) || !nzchar(run_id) ||
-      grepl("[/\\\\]", run_id) || run_id %in% c(".", "..")) {
-    stop("run_id must be a single non-empty name with no path separators, ",
-         "since it names a subdirectory of working_dir; got: ",
-         paste(format(run_id), collapse = ", "), call. = FALSE)
-  }
-
-  reserved <- intersect(
-    names(control_args),
+  check_run_id(run_id)
+  check_no_reserved_args(
+    control_args,
     c("file", "data_file", "n_items", "item1", "namlen", "iafile", "idfile", "pfile")
   )
-  if (length(reserved) > 0) {
-    stop("control_args cannot set argument(s) that winsteps_estimate() ",
-         "derives itself: ", paste(reserved, collapse = ", "),
-         ". Call winsteps_write_control_file() directly if you need control ",
-         "over these.", call. = FALSE)
-  }
 
   run_dir <- file.path(working_dir, run_id)
   dir.create(run_dir, recursive = TRUE, showWarnings = FALSE)
