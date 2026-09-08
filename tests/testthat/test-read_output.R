@@ -18,9 +18,11 @@ test_that("read_person_output returns zero-row tibble for header-only file", {
   expect_equal(nrow(out), 0)
 })
 
-test_that("read_report returns character(0) for a missing file when empty_ok", {
+test_that("read_report returns an empty report for a missing file when empty_ok", {
   out <- winsteps_read_report(tempfile(), empty_ok = TRUE)
-  expect_equal(out, character(0))
+  expect_s3_class(out, "winsteps_report")
+  expect_length(out, 0)
+  expect_equal(as.character(out), character(0))
 })
 
 test_that("read_report errors when file is missing and !empty_ok", {
@@ -30,11 +32,59 @@ test_that("read_report errors when file is missing and !empty_ok", {
 test_that("read_report returns raw lines from a report file", {
   tmp <- tempfile()
   on.exit(unlink(tmp))
-  writeLines(c("TABLE 17.1", "some table content", "more content"), tmp)
-  expect_equal(
-    winsteps_read_report(tmp),
-    c("TABLE 17.1", "some table content", "more content")
+  lines <- c("TABLE 17.1", "some table content", "more content")
+  writeLines(lines, tmp)
+  out <- winsteps_read_report(tmp)
+
+  expect_s3_class(out, "winsteps_report")
+  expect_equal(as.character(out), lines)
+})
+
+test_that("a winsteps_report behaves as a character vector", {
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  lines <- c("TABLE 17.1", "some table content", "more content")
+  writeLines(lines, tmp)
+  out <- winsteps_read_report(tmp)
+
+  expect_true(is.character(out))
+  expect_length(out, 3)
+  expect_equal(out[2], "some table content")
+  expect_true(any(grepl("table content", out)))
+  # round-trips through writeLines like any other character vector
+  tmp2 <- tempfile()
+  on.exit(unlink(tmp2), add = TRUE)
+  writeLines(out, tmp2)
+  expect_equal(readLines(tmp2), lines)
+})
+
+test_that("printing a report summarises its tables instead of echoing them", {
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  writeLines(
+    c("TABLE 17.1 PERSON MEASURE ORDER", rep("detail", 5),
+      "TABLE 3.1 SUMMARY OF MEASURED PERSONS", rep("detail", 9)),
+    tmp
   )
+  out <- capture.output(print(winsteps_read_report(tmp)))
+
+  expect_match(out[1], "16 lines from 2 tables")
+  expect_true(any(grepl("TABLE 17\\.1", out)))
+  expect_true(any(grepl("TABLE 3\\.1", out)))
+  # the 16-line report does not print 16 lines
+  expect_lt(length(out), 10)
+})
+
+test_that("printing copes with an empty report and one with no table headings", {
+  empty <- capture.output(print(winsteps_read_report(tempfile())))
+  expect_match(empty[1], "0 lines")
+  expect_true(any(grepl("no report file", empty)))
+
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  writeLines(c("some output", "without headings"), tmp)
+  plain <- capture.output(print(winsteps_read_report(tmp)))
+  expect_true(any(grepl("no TABLE headings found", plain)))
 })
 
 test_that("read_person_output parses a simple whitespace table", {

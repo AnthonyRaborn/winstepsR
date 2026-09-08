@@ -9,11 +9,16 @@ winsteps_read_report(file, empty_ok = TRUE)
 \arguments{
 \item{file}{Path to the report file.}
 
-\item{empty_ok}{If \code{TRUE} (default), a missing file returns
-\code{character(0)} instead of raising an error.}
+\item{empty_ok}{If \code{TRUE} (default), a missing file returns an empty
+report instead of raising an error.}
 }
 \value{
-Character vector of raw lines from the report file.
+A \code{winsteps_report}: the raw lines of the report file, as a
+character vector with a class attached so that printing it summarises
+the tables it contains rather than echoing every line. It inherits from
+\code{character}, so it can be used anywhere a character vector can --
+\code{grepl()}, \code{writeLines()}, \code{length()} and subsetting all behave as
+before. Use \code{\link[=as.character]{as.character()}} to drop the class.
 }
 \description{
 Winsteps' \verb{TFILE=} requests one or more numbered tables (e.g. \code{"17.1"},

@@ -53,6 +53,13 @@ cases into errors at the point the bad input arrives.
   summary of the run -- items anchored and estimated, persons, whether Winsteps
   ran, files on disk -- instead of dumping every line of every file it read
   back.
+* `winsteps_read_report()` returns a `winsteps_report`, a character vector
+  that prints a summary of the tables it holds -- their numbers, where each
+  starts and how many lines it runs to -- rather than echoing several hundred
+  lines of table output. It inherits from `character`, so `grepl()`,
+  `writeLines()`, `length()` and subsetting are unaffected; `as.character()`
+  drops the class. Code comparing the return value against a bare character
+  vector with `identical()` or `expect_equal()` needs that call.
 * `winsteps_estimate()` delegates its file paths and its read-back step to
   internal helpers, so its body reads as prepare, write, run, read.
 

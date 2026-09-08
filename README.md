@@ -102,9 +102,23 @@ result <- winsteps_estimate(
 result$contents$report  # raw lines of Table 17.1
 ```
 
-Table layouts vary too much across Winsteps tables to parse generically,
-so `winsteps_read_report()` (and `contents$report`) just return raw lines
-for you to inspect or parse per-table.
+Table layouts vary too much across Winsteps tables to parse generically, so
+`winsteps_read_report()` (and `contents$report`) return the raw lines for you
+to inspect or parse per-table. They come back as a `winsteps_report`, which is
+a character vector — `grepl()`, `writeLines()`, `length()` and subsetting all
+work as usual — that prints a summary of the tables it holds instead of
+echoing several hundred lines:
+
+```
+<winsteps_report> 299 lines from 2 tables
+  TABLE 17.1   line 1        140 lines
+  TABLE 3.1    line 141      159 lines
+
+  TABLE 17.1 PERSON MEASURE ORDER      ZOU870ws.txt Sep  8 09:14 2026
+  ... 297 more lines
+```
+
+Use `as.character()` to drop the class.
 
 ### Estimation settings (PROX vs. JMLE, convergence criteria)
 
@@ -176,7 +190,8 @@ each of which can be used independently for more custom workflows:
 - `winsteps_read_person_output()` — read a PFILE into a tibble, handling the
   empty-output case.
 - `winsteps_read_report()` — read a `TFILE=`-requested table report as raw
-  lines, handling the missing-file case.
+  lines, handling the missing-file case. Returns a `winsteps_report`, which
+  prints a per-table summary but is otherwise a plain character vector.
 
 ## Input validation
 
