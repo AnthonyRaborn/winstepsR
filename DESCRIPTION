@@ -1,6 +1,6 @@
 Package: winstepsR
 Title: Generate Input Files for 'Winsteps', Run It, and Read the Output
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Anthony", "Raborn", email = "anthony@raborndecisionsciences.com", role = c("aut", "cre"))
 Description: A thin, organization-agnostic interface between R and the Rasch
     measurement program 'Winsteps' (<https://www.winsteps.com/index.htm>).

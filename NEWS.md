@@ -1,8 +1,18 @@
-# winstepsR 0.1.0.9000 (development)
+# winstepsR 0.2.0
 
-Fixes from a full review of 0.1.0. The theme is that the package used to write
-files Winsteps would accept and silently misread; most changes turn those
+Fixes from a full review of 0.1.0, with the behaviour of every change verified
+against a real Winsteps installation. The theme is that the package used to
+write files Winsteps would accept and silently misread; most changes turn those
 cases into errors at the point the bad input arrives.
+
+Existing code should keep working, with three exceptions worth checking:
+`winsteps_read_report()` now returns a classed character vector, so a bare
+`identical()` or `expect_equal()` against a plain character vector needs
+`as.character()`; `result$contents` no longer carries entries for files that
+were not written, so `names()` on it is shorter (`$delete` still reads as
+`NULL`); and inputs that used to be accepted silently -- responses wider than
+one character, non-finite anchors, duplicate items, zero-row data -- are now
+errors.
 
 ## Correctness
 
