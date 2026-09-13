@@ -184,6 +184,108 @@ To generate the input files without invoking Winsteps (e.g. to inspect them,
 or hand them off to a Windows machine that will run Winsteps separately),
 pass `run = FALSE`.
 
+## How `winsteps_estimate()` fits together
+
+The diagram below traces every internal call `winsteps_estimate()` makes, in
+the order the four phases run: validate inputs, prepare data, write files,
+then (if `run = TRUE`) run Winsteps and read its output. Blue nodes are the
+main pipeline, gray nodes are file I/O helpers, and purple nodes are
+validation — most of which live in one small vocabulary of named guards
+rather than being repeated inline at each call site.
+
+```mermaid
+flowchart TD
+    EST["winsteps_estimate()"]
+
+    subgraph VALIDATE["Validate & resolve"]
+        RA["resolve_anchors()"]
+        WA["winsteps_anchors()"]
+        CI["check_items()"]
+        CFA["check_finite_anchors()"]
+        CK["check_keep()"]
+        CRI["check_run_id()"]
+        CNRA["check_no_reserved_args()"]
+    end
+
+    subgraph PREPARE["Prepare data"]
+        PPD["winsteps_prepare_person_data()"]
+        CCP["check_columns_present()"]
+        CHR["check_has_rows()"]
+        CSC["check_single_char()"]
+        CS["coerce_scores()"]
+        CSCC["check_single_char_codes()"]
+        CORP["check_one_response_per_pair()"]
+    end
+
+    subgraph WRITE["Write files"]
+        WPD["winsteps_write_person_data()"]
+        WAF["winsteps_write_anchor_file()"]
+        WISF["winsteps_write_item_subset_file()"]
+        WCF["winsteps_write_control_file()"]
+        CPI["check_positive_ints()"]
+        CKK["check_known_keywords()"]
+        WB["winsteps_write_bat()"]
+    end
+
+    subgraph RUN["Run Winsteps (run = TRUE)"]
+        WR["winsteps_run()"]
+        WSOS["winsteps_stop_on_status()"]
+    end
+
+    subgraph READ["Read output (run = TRUE)"]
+        RPO["winsteps_read_person_output()"]
+        RIO["winsteps_read_item_output()"]
+        RR["winsteps_read_report()"]
+        RWT["read_winsteps_table()"]
+    end
+
+    EST --> RA --> WA
+    WA --> CI
+    WA --> CFA
+    EST --> CK
+    EST --> CRI
+    EST --> CNRA
+
+    EST --> PPD
+    PPD --> CCP
+    PPD --> CHR
+    PPD --> CSC
+    PPD --> CI
+    PPD --> CS --> CSCC
+    PPD --> CORP
+
+    EST --> WPD
+    EST --> WAF
+    EST --> WISF
+    EST --> WCF
+    WCF --> CPI
+    WCF --> CKK
+    EST --> WB
+
+    EST -.-> WR
+    WR --> WSOS
+
+    EST -.-> RPO --> RWT
+    EST -.-> RIO --> RWT
+    EST -.-> RR
+
+    classDef pipeline fill:#4a6fa5,color:#fff,stroke:#2d3436;
+    classDef helper fill:#7b8794,color:#fff,stroke:#2d3436;
+    classDef validate fill:#9b8bb4,color:#fff,stroke:#2d3436;
+
+    class EST,RA,WA,PPD,WR pipeline;
+    class WPD,WAF,WISF,WCF,WB,RPO,RIO,RR,RWT helper;
+    class CI,CFA,CK,CRI,CNRA,CCP,CHR,CSC,CS,CSCC,CORP,CPI,CKK,WSOS validate;
+```
+
+A `winsteps_anchors` object is validated once, at construction
+(`check_items()` / `check_finite_anchors()` inside `winsteps_anchors()`);
+`winsteps_write_anchor_file()` and `winsteps_write_item_subset_file()` trust
+it from then on rather than re-checking it on every write. The dashed edges
+into `RUN` and `READ` mark the part of the graph that only executes when
+`run = TRUE` — with `run = FALSE`, `winsteps_estimate()` stops after writing
+the batch file.
+
 ## Lower-level functions
 
 `winsteps_estimate()` is a convenience wrapper around these building blocks,
