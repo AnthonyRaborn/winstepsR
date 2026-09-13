@@ -2,35 +2,27 @@
 % Please edit documentation in R/anchor_file.R
 \name{winsteps_write_anchor_file}
 \alias{winsteps_write_anchor_file}
-\alias{winsteps_write_anchor_file.winsteps_anchors}
-\alias{winsteps_write_anchor_file.default}
 \title{Write a Winsteps item anchor file (IAFILE)}
 \usage{
-winsteps_write_anchor_file(x, ...)
-
-\method{winsteps_write_anchor_file}{winsteps_anchors}(x, file, digits = NULL, ...)
-
-\method{winsteps_write_anchor_file}{default}(x, values, file, digits = NULL, ...)
+winsteps_write_anchor_file(x, values = NULL, file, digits = NULL)
 }
 \arguments{
 \item{x}{Either a \code{\link[=winsteps_anchors]{winsteps_anchors()}} object, or a character vector of
 item names in the same order used to build the data file (see \code{items} in
 \code{\link[=winsteps_prepare_person_data]{winsteps_prepare_person_data()}}).}
 
-\item{...}{Passed between methods.}
+\item{values}{Numeric vector of anchor values (e.g. IRT b-parameters),
+same length and order as \code{x}. Must all be finite -- a missing anchor
+would be written literally and silently leave that item unanchored. Not
+used when \code{x} is a \code{winsteps_anchors}, which already carries them.}
 
 \item{file}{Path to write the anchor file to.}
 
 \item{digits}{Optional number of decimal places to round the values to
 before writing.}
-
-\item{values}{Numeric vector of anchor values (e.g. IRT b-parameters),
-same length and order as \code{x}. Must all be finite -- a missing anchor
-would be written literally and silently leave that item unanchored. Not
-used when \code{x} is a \code{winsteps_anchors}, which already carries them.}
 }
 \value{
-\code{file}, invisibly.
+The lines written to \code{file}, invisibly.
 }
 \description{
 Produces a tab-delimited file with one line per item:

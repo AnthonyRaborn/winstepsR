@@ -48,6 +48,13 @@
 #' @param run Whether to actually invoke Winsteps ([winsteps_run()]). Set
 #'   to `FALSE` to only generate input files (e.g. to inspect them, or to
 #'   run Winsteps manually / on a different machine).
+#' @param verify_write If `TRUE`, `result$contents` is read back from the
+#'   files just written rather than taken from the lines already held in
+#'   memory, confirming what actually landed on disk. Defaults to `FALSE`:
+#'   each writer already errors on failure, so the read-back rarely catches
+#'   anything a normal run would not, and it is not free -- for a large
+#'   cohort, re-reading the data file back from disk is the most expensive
+#'   part of the call.
 #'
 #' @details When `run = TRUE`, a failed Winsteps run raises an error rather
 #'   than returning an empty result: a non-zero exit status errors via
@@ -105,7 +112,8 @@ winsteps_estimate <- function(data,
                                working_dir = tempdir(),
                                control_args = list(),
                                winsteps_exe = getOption("winstepsR.exe_path"),
-                               run = TRUE) {
+                               run = TRUE,
+                               verify_write = FALSE) {
   started <- Sys.time()
 
   anchors <- resolve_anchors(anchors, items, anchor_values)
@@ -131,10 +139,11 @@ winsteps_estimate <- function(data,
 
   paths <- winsteps_run_paths(run_dir, subset = !is.null(keep_items))
 
-  winsteps_write_person_data(prepared, paths$data_file)
-  winsteps_write_anchor_file(anchors, file = paths$anchor_file)
+  data_lines <- winsteps_write_person_data(prepared, paths$data_file)
+  anchor_lines <- winsteps_write_anchor_file(anchors, file = paths$anchor_file)
+  delete_lines <- NULL
   if (!is.null(paths$delete_file)) {
-    winsteps_write_item_subset_file(anchors, keep = keep_items, file = paths$delete_file)
+    delete_lines <- winsteps_write_item_subset_file(anchors, keep = keep_items, file = paths$delete_file)
   }
 
   control_defaults <- list(
@@ -160,9 +169,9 @@ winsteps_estimate <- function(data,
   if (is.null(control_args$item_labels)) {
     control_defaults$item_labels <- anchors$items
   }
-  do.call(winsteps_write_control_file, c(control_defaults, control_args))
+  control_lines <- do.call(winsteps_write_control_file, c(control_defaults, control_args))
 
-  winsteps_write_bat(
+  bat_lines <- winsteps_write_bat(
     file = paths$bat_file,
     control_file = basename(paths$control_file),
     out_file = basename(paths$report_file),
@@ -170,7 +179,12 @@ winsteps_estimate <- function(data,
   )
 
   result <- c(list(run_id = run_id, run_dir = run_dir, run_at = started), paths)
-  result$contents <- winsteps_read_back(paths)
+  result$contents <- if (verify_write) {
+    winsteps_read_back(paths)
+  } else {
+    drop_null(list(data = data_lines, anchor = anchor_lines, delete = delete_lines,
+                   control = control_lines, bat = bat_lines))
+  }
 
   if (run) {
     # Errors on a non-zero exit status, so a crashed run cannot be mistaken
@@ -290,24 +304,25 @@ winsteps_run_paths <- function(run_dir, subset = FALSE) {
   )
 }
 
-# Read back what was just written.
+# Read back what was just written, for the verify_write = TRUE path.
 #
-# Deliberately read from disk rather than kept from memory: working_dir
-# defaults to a temp directory the OS may clear, and reading back confirms what
-# actually landed on disk for a format with no validation on the far side.
+# The default path keeps the lines each writer already held in memory; this
+# instead reads every file from disk, confirming what actually landed there
+# for a format with no validation on the far side.
 winsteps_read_back <- function(paths) {
   read_or_null <- function(f) if (!is.null(f) && file.exists(f)) readLines(f, warn = FALSE) else NULL
-  out <- list(
+  drop_null(list(
     data    = read_or_null(paths$data_file),
     anchor  = read_or_null(paths$anchor_file),
     delete  = read_or_null(paths$delete_file),
     control = read_or_null(paths$control_file),
     bat     = read_or_null(paths$bat_file)
-  )
-  # Drop entries for files that were not written, so names(contents) lists what
-  # actually exists. Absent and NULL read the same through `$`.
-  out[!vapply(out, is.null, logical(1))]
+  ))
 }
+
+# Drop NULL entries from a named list, so names(x) lists only what is
+# actually present. Absent and NULL read the same through `$`.
+drop_null <- function(x) x[!vapply(x, is.null, logical(1))]
 
 # Compact elapsed-time label for print(): "0.4s", "12.7s", "3m 04s".
 format_secs <- function(x) {

@@ -56,7 +56,7 @@
 #'   lines to insert before `&END`, for any Winsteps keyword not
 #'   otherwise covered here.
 #'
-#' @return `file`, invisibly.
+#' @return The lines written to `file`, invisibly.
 #' @examples
 #' f <- tempfile(fileext = ".ctr")
 #' winsteps_write_control_file(
@@ -91,31 +91,11 @@ winsteps_write_control_file <- function(file,
                                          estimation = list(),
                                          tfile = NULL,
                                          extra = character(0)) {
-  check_positive_int(n_items, "n_items")
-  check_positive_int(item1, "item1")
-  check_positive_int(name1, "name1")
-  check_positive_int(delimiter_width, "delimiter_width")
-  check_positive_int(namlen, "namlen")
+  check_positive_ints(list(n_items = n_items, item1 = item1, name1 = name1,
+                           delimiter_width = delimiter_width, namlen = namlen))
 
   if (!is.null(item_labels) && length(item_labels) != n_items) {
     stop("item_labels must have length n_items (", n_items, ")", call. = FALSE)
-  }
-
-  # Winsteps splits an unquoted value at whitespace, so a path containing a
-  # space needs quoting; paths without one are left exactly as before.
-  quote_if_needed <- function(x) {
-    if (grepl("[[:space:]]", x) && !grepl('^".*"$', x)) paste0('"', x, '"') else x
-  }
-
-  # scientific = FALSE keeps 0.0001 from becoming 1e-04, and decimal.mark
-  # keeps options(OutDec = ",") from writing 0,0001. Winsteps silently
-  # misreads both.
-  fmt <- function(x) {
-    if (is.numeric(x)) {
-      format(x, scientific = FALSE, trim = TRUE, decimal.mark = ".")
-    } else {
-      as.character(x)
-    }
   }
 
   default_estimation <- list(
@@ -168,5 +148,21 @@ winsteps_write_control_file <- function(file,
   }
 
   writeLines(lines, con = file)
-  invisible(file)
+  invisible(unname(lines))
+}
+
+# Winsteps splits an unquoted value at whitespace, so a path containing a
+# space needs quoting; paths without one are left exactly as before.
+quote_if_needed <- function(x) {
+  if (grepl("[[:space:]]", x) && !grepl('^".*"$', x)) paste0('"', x, '"') else x
+}
+
+# scientific = FALSE keeps 0.0001 from becoming 1e-04, and decimal.mark keeps
+# options(OutDec = ",") from writing 0,0001. Winsteps silently misreads both.
+fmt <- function(x) {
+  if (is.numeric(x)) {
+    format(x, scientific = FALSE, trim = TRUE, decimal.mark = ".")
+  } else {
+    as.character(x)
+  }
 }

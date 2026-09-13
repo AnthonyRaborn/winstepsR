@@ -25,6 +25,15 @@ check_positive_int <- function(x, what) {
   invisible(x)
 }
 
+# check_positive_int() over several named values at once, e.g. the layout
+# positions in winsteps_write_control_file(). Reports the same per-value
+# message as calling check_positive_int() individually, just without a
+# checking call for each one at the top of the caller.
+check_positive_ints <- function(values) {
+  Map(check_positive_int, values, names(values))
+  invisible(values)
+}
+
 # The item vector indexes the anchor file, the delete file and the data file by
 # position, so a duplicate name makes those three disagree about which sequence
 # number an item has. Tabs and semicolons are the anchor file's own delimiter
@@ -92,17 +101,15 @@ check_one_response_per_pair <- function(long) {
   invisible(long)
 }
 
-# The response block is built one character per item and ITEM1/NI are computed
-# on that assumption, so a wider code would silently shift every column after
-# it rather than failing.
-xwide_note <- "Winsteps reads one character per item unless XWIDE= is set, which this function does not support"
-
 # Widths are measured in bytes because Winsteps counts file columns in bytes,
-# not characters.
+# not characters. The response block is built one character per item and
+# ITEM1/NI are computed on that assumption, so a wider code would silently
+# shift every column after it rather than failing.
 check_single_char <- function(x, what) {
   if (length(x) != 1 || is.na(x) || nchar(x, type = "bytes") != 1L) {
     stop(what, " must be exactly one character, and one byte, not \"", x, "\". ",
-         xwide_note, ".", call. = FALSE)
+         "Winsteps reads one character per item unless XWIDE= is set, which ",
+         "this function does not support.", call. = FALSE)
   }
   invisible(x)
 }
@@ -112,8 +119,9 @@ check_single_char_codes <- function(codes) {
   if (length(wide) > 0) {
     stop("Response codes must be exactly one character each; found ",
          length(wide), " that are not: ", format_examples(wide, quote = TRUE),
-         ". ", xwide_note, "; recode these responses (e.g. map 10 to \"A\") ",
-         "before calling.", call. = FALSE)
+         ". Winsteps reads one character per item unless XWIDE= is set, ",
+         "which this function does not support; recode these responses ",
+         "(e.g. map 10 to \"A\") before calling.", call. = FALSE)
   }
   invisible(codes)
 }

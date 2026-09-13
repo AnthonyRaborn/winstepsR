@@ -15,6 +15,14 @@ test_that("check_positive_int accepts whole positive scalars only", {
   }
 })
 
+test_that("check_positive_ints validates a batch, naming the offending one", {
+  expect_silent(winstepsR:::check_positive_ints(list(a = 1, b = 50L)))
+  expect_error(winstepsR:::check_positive_ints(list(a = 1, b = -1)),
+               "b must be a single positive whole number")
+  expect_error(winstepsR:::check_positive_ints(list(a = 0, b = 1)),
+               "a must be a single positive whole number")
+})
+
 test_that("check_items rejects empty, duplicated and delimiter-bearing names", {
   expect_silent(winstepsR:::check_items(c("A", "B")))
   expect_error(winstepsR:::check_items(character(0)), "items is empty")

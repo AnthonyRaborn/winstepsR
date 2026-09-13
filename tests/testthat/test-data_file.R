@@ -141,6 +141,13 @@ test_that("unreadable scores warn instead of silently becoming missing", {
   expect_equal(prepared$lines, "1*.0")
 })
 
+test_that("coerce_scores takes a fast path for already-numeric input, with the same output", {
+  expect_equal(winstepsR:::coerce_scores(c(1, 0, NA_real_), "."), c("1", "0", "."))
+  expect_equal(winstepsR:::coerce_scores(c(1L, 0L, NA_integer_), "."), c("1", "0", "."))
+  # a numeric column never triggers the "could not be read as numbers" warning
+  expect_no_warning(winstepsR:::coerce_scores(c(1, 0, NA_real_), "."))
+})
+
 test_that("genuinely missing scores do not warn", {
   data <- data.frame(
     id = c("1", "1"),

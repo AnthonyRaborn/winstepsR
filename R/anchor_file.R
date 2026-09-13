@@ -15,9 +15,8 @@
 #' @param file Path to write the anchor file to.
 #' @param digits Optional number of decimal places to round the values to
 #'   before writing.
-#' @param ... Passed between methods.
 #'
-#' @return `file`, invisibly.
+#' @return The lines written to `file`, invisibly.
 #' @examples
 #' anchors <- winsteps_anchors(c("q01", "q02", "q03"), c(-1.2, 0, 0.8))
 #' f <- tempfile(fileext = ".txt")
@@ -31,35 +30,24 @@
 #'
 #' unlink(f)
 #' @export
-winsteps_write_anchor_file <- function(x, ...) {
-  UseMethod("winsteps_write_anchor_file")
-}
+winsteps_write_anchor_file <- function(x, values = NULL, file, digits = NULL) {
+  # A winsteps_anchors object was already validated at construction; only a
+  # bare item vector needs validating here.
+  if (!inherits(x, "winsteps_anchors")) {
+    x <- winsteps_anchors(x, values)
+  }
 
-#' @rdname winsteps_write_anchor_file
-#' @export
-winsteps_write_anchor_file.winsteps_anchors <- function(x, file, digits = NULL, ...) {
-  values <- x$values
-  if (!is.null(digits)) values <- round(values, digits)
+  item_values <- x$values
+  if (!is.null(digits)) item_values <- round(item_values, digits)
 
-  out <- data.frame(
-    seq = seq_along(x$items),
-    # decimal.mark is pinned for the same reason scientific notation is
-    # suppressed: Winsteps parses "0.5", and options(OutDec = ",") would
-    # otherwise write "0,5" here without any error.
-    value = format(values, scientific = FALSE, trim = TRUE, decimal.mark = "."),
-    delim = ";",
-    item = x$items,
-    stringsAsFactors = FALSE
-  )
-  utils::write.table(out, file = file, sep = "\t",
-                     row.names = FALSE, col.names = FALSE, quote = FALSE)
-  invisible(file)
-}
-
-#' @rdname winsteps_write_anchor_file
-#' @export
-winsteps_write_anchor_file.default <- function(x, values, file, digits = NULL, ...) {
-  winsteps_write_anchor_file(winsteps_anchors(x, values), file = file, digits = digits)
+  # decimal.mark is pinned for the same reason scientific notation is
+  # suppressed: Winsteps parses "0.5", and options(OutDec = ",") would
+  # otherwise write "0,5" here without any error.
+  formatted_values <- format(item_values, scientific = FALSE, trim = TRUE,
+                             decimal.mark = ".")
+  lines <- paste(seq_along(x$items), formatted_values, ";", x$items, sep = "\t")
+  writeLines(lines, con = file)
+  invisible(lines)
 }
 
 #' Write a Winsteps item-subset (delete) file (IDFILE)
@@ -77,9 +65,8 @@ winsteps_write_anchor_file.default <- function(x, values, file, digits = NULL, .
 #'   estimation run; every other item is written to the delete file. Must be
 #'   non-empty.
 #' @param file Path to write the delete file to.
-#' @param ... Passed between methods.
 #'
-#' @return `file`, invisibly.
+#' @return The lines written to `file`, invisibly.
 #' @examples
 #' anchors <- winsteps_anchors(sprintf("q%02d", 1:6), seq(-1.5, 1.5, length.out = 6))
 #' f <- tempfile(fileext = ".txt")
@@ -91,30 +78,19 @@ winsteps_write_anchor_file.default <- function(x, values, file, digits = NULL, .
 #'
 #' unlink(f)
 #' @export
-winsteps_write_item_subset_file <- function(x, ...) {
-  UseMethod("winsteps_write_item_subset_file")
-}
+winsteps_write_item_subset_file <- function(x, keep, file) {
+  # A winsteps_anchors object's items were already validated at construction;
+  # only a bare item vector needs validating here.
+  if (inherits(x, "winsteps_anchors")) {
+    items <- x$items
+  } else {
+    items <- x
+    check_items(items)
+  }
+  check_keep(keep, items)
 
-#' @rdname winsteps_write_item_subset_file
-#' @export
-winsteps_write_item_subset_file.winsteps_anchors <- function(x, keep, file, ...) {
-  winsteps_write_item_subset_file(x$items, keep = keep, file = file)
-}
-
-#' @rdname winsteps_write_item_subset_file
-#' @export
-winsteps_write_item_subset_file.default <- function(x, keep, file, ...) {
-  check_items(x)
-  check_keep(keep, x)
-
-  exclude <- !(x %in% keep)
-  out <- data.frame(
-    seq = seq_along(x)[exclude],
-    delim = ";",
-    item = x[exclude],
-    stringsAsFactors = FALSE
-  )
-  utils::write.table(out, file = file, sep = "\t",
-                     row.names = FALSE, col.names = FALSE, quote = FALSE)
-  invisible(file)
+  exclude <- !(items %in% keep)
+  lines <- paste(seq_along(items)[exclude], ";", items[exclude], sep = "\t")
+  writeLines(lines, con = file)
+  invisible(lines)
 }

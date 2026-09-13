@@ -91,7 +91,7 @@ lines to insert before \verb{&END}, for any Winsteps keyword not
 otherwise covered here.}
 }
 \value{
-\code{file}, invisibly.
+The lines written to \code{file}, invisibly.
 }
 \description{
 Assembles a Winsteps \code{.ctr} control file from parameters. No exam- or

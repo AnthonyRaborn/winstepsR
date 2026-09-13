@@ -24,7 +24,7 @@
 #'   [winsteps_run()] or by double-clicking it, and still finds its control
 #'   file and leaves its output alongside itself.
 #'
-#' @return `file`, invisibly.
+#' @return The lines written to `file`, invisibly.
 #' @examples
 #' f <- tempfile(fileext = ".bat")
 #' winsteps_write_bat(
@@ -68,7 +68,7 @@ winsteps_write_bat <- function(file,
     )
   )
   writeLines(lines, con = file)
-  invisible(file)
+  invisible(lines)
 }
 
 #' Run a Winsteps batch file

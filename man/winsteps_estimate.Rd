@@ -17,7 +17,8 @@ winsteps_estimate(
   working_dir = tempdir(),
   control_args = list(),
   winsteps_exe = getOption("winstepsR.exe_path"),
-  run = TRUE
+  run = TRUE,
+  verify_write = FALSE
 )
 }
 \arguments{
@@ -66,6 +67,14 @@ and read back into \code{contents$report} (see below).}
 \item{run}{Whether to actually invoke Winsteps (\code{\link[=winsteps_run]{winsteps_run()}}). Set
 to \code{FALSE} to only generate input files (e.g. to inspect them, or to
 run Winsteps manually / on a different machine).}
+
+\item{verify_write}{If \code{TRUE}, \code{result$contents} is read back from the
+files just written rather than taken from the lines already held in
+memory, confirming what actually landed on disk. Defaults to \code{FALSE}:
+each writer already errors on failure, so the read-back rarely catches
+anything a normal run would not, and it is not free -- for a large
+cohort, re-reading the data file back from disk is the most expensive
+part of the call.}
 }
 \value{
 An object of class \code{winsteps_result}, which prints as a summary of

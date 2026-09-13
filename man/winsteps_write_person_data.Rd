@@ -11,6 +11,9 @@ winsteps_write_person_data(prepared, file)
 
 \item{file}{Path to write the Winsteps \verb{DATA=} file to.}
 }
+\value{
+The lines written to \code{file}, invisibly.
+}
 \description{
 Write prepared Winsteps person-data lines to a file
 }

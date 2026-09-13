@@ -31,7 +31,7 @@ hardcoding it at every call site.}
 \code{"HLINES=YES"}.}
 }
 \value{
-\code{file}, invisibly.
+The lines written to \code{file}, invisibly.
 }
 \description{
 Write a Winsteps batch (.bat) runner file

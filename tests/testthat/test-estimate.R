@@ -471,6 +471,47 @@ test_that("a caller can still supply their own item labels", {
                c("Airway management", "Cardiac rhythm"))
 })
 
+test_that("contents is populated from memory by default, not re-read from disk", {
+  data <- data.frame(
+    id = rep(c("001", "002"), each = 2),
+    item = rep(c("A", "B"), 2), score = c(1, 0, 0, 1)
+  )
+  result <- winsteps_estimate(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    anchors = winsteps_anchors(c("A", "B"), c(-0.5, 0.5)),
+    run_id = "mem", working_dir = tempfile(),
+    winsteps_exe = "Winsteps.exe", run = FALSE
+  )
+  expect_equal(result$contents$data, readLines(result$data_file))
+  expect_equal(result$contents$anchor, readLines(result$anchor_file))
+  expect_equal(result$contents$control, readLines(result$control_file))
+  expect_equal(result$contents$bat, readLines(result$bat_file))
+
+  # proof the default path never touched disk to build $contents: deleting the
+  # files afterward does not change what is already in $contents
+  file.remove(result$data_file, result$anchor_file, result$control_file, result$bat_file)
+  expect_true(length(result$contents$data) > 0)
+  expect_true(length(result$contents$anchor) > 0)
+})
+
+test_that("verify_write = TRUE reads contents back from disk instead", {
+  data <- data.frame(
+    id = rep(c("001", "002"), each = 2),
+    item = rep(c("A", "B"), 2), score = c(1, 0, 0, 1)
+  )
+  result <- winsteps_estimate(
+    data = data, id_col = "id", item_col = "item", score_col = "score",
+    anchors = winsteps_anchors(c("A", "B"), c(-0.5, 0.5)),
+    run_id = "verify", working_dir = tempfile(),
+    winsteps_exe = "Winsteps.exe", run = FALSE, verify_write = TRUE
+  )
+  expect_equal(result$contents$data, readLines(result$data_file))
+  expect_equal(result$contents$anchor, readLines(result$anchor_file))
+  expect_equal(result$contents$control, readLines(result$control_file))
+  expect_equal(result$contents$bat, readLines(result$bat_file))
+  expect_null(result$contents$delete)
+})
+
 test_that("contents lists only the files that were actually written", {
   # names(contents) previously advertised a `delete` entry on every run, even
   # when no item subset was used and no delete file existed.

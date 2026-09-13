@@ -176,6 +176,7 @@ print.winsteps_person_data <- function(x, n = 3, ...) {
 #'
 #' @param prepared Output of [winsteps_prepare_person_data()].
 #' @param file Path to write the Winsteps `DATA=` file to.
+#' @return The lines written to `file`, invisibly.
 #' @examples
 #' responses <- data.frame(
 #'   person_id = rep(c("00001", "00002"), each = 3),
@@ -200,7 +201,7 @@ winsteps_write_person_data <- function(prepared, file) {
          "with a character `lines` element", call. = FALSE)
   }
   writeLines(prepared$lines, con = file)
-  invisible(file)
+  invisible(prepared$lines)
 }
 
 # Coerce a response column to the single-character text Winsteps expects.
@@ -210,6 +211,14 @@ winsteps_write_person_data <- function(prepared, file) {
 # "correct"/"incorrect" column, a stray "N/A") that would otherwise become a
 # run scoring nobody, so those warn.
 coerce_scores <- function(score, missing_code) {
+  if (is.numeric(score)) {
+    # Already numeric, so as.numeric() first would only round-trip the value
+    # through itself; detecting unparseable input does not apply here.
+    parsed <- as.character(score)
+    parsed[is.na(parsed)] <- missing_code
+    return(parsed)
+  }
+
   parsed <- as.character(suppressWarnings(as.numeric(score)))
   unreadable <- is.na(parsed) & !is.na(score)
   if (any(unreadable)) {
