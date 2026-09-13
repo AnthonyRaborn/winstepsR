@@ -129,7 +129,7 @@ Use `as.character()` to drop the class.
 ### Estimation settings (PROX vs. JMLE, convergence criteria)
 
 `control_args$estimation` is a named list merged *over* built-in defaults
-(`MPROX=20`, `MJMLE=0`, `CONVERGE=L`, `LCONV=0.0001`, `UDECIM=4`) via
+(`MPROX=20`, `MJMLE=0`, `CONVERGE=L`, `LCONV=0.0001`, `UDECIMALS=4`) via
 `modifyList()` — passing e.g. `list(RCONV = 0.5)` adds `RCONV` alongside
 those defaults rather than replacing the whole list and silently dropping
 `MPROX`/`MJMLE`. Set a built-in key to `NULL` to omit it entirely, e.g.
@@ -146,11 +146,16 @@ winsteps_estimate(
 Two things worth double-checking if a recreated control file doesn't
 behave like the original you're matching:
 
-- **Keyword spelling matters and isn't validated.** Winsteps silently
-  ignores unrecognized keywords rather than erroring, so a typo like
-  `UDECIMALS` (the real keyword is `UDECIM`) has no effect and won't be
-  reported as a mistake — the line is written verbatim but Winsteps just
-  never sees it as meaningful.
+- **Keyword spelling matters, and Winsteps itself won't catch a typo.**
+  Winsteps silently ignores unrecognized keywords rather than erroring, so
+  a typo like `UDECIMALZ` (the real keyword is `UDECIMALS`) has no effect
+  and Winsteps never reports it as a mistake — the line is written verbatim
+  but Winsteps just never sees it as meaningful. `UDECIM` is not a typo:
+  Winsteps accepts an unambiguous abbreviation of a keyword, so
+  `winsteps_write_control_file()`'s keyword check does too.
+  It warns when a keyword in `estimation` or `extra` doesn't match a known
+  Winsteps keyword (or an unambiguous abbreviation of one), to catch this
+  class of mistake before it reaches Winsteps.
 - **Numeric values are written in plain decimal, not scientific
   notation.** `paste0("LCONV=", 0.0001)` in base R produces
   `"LCONV=1e-04;"`, which Winsteps' control-file parser does not treat as

@@ -67,7 +67,7 @@ test_that("a partial estimation override merges over defaults instead of replaci
   expect_true("MJMLE=0;" %in% lines)
   expect_true("CONVERGE=L;" %in% lines)
   expect_true("LCONV=0.0001;" %in% lines)
-  expect_true("UDECIM=4;" %in% lines)
+  expect_true("UDECIMALS=4;" %in% lines)
 })
 
 test_that("small numeric estimation values are written in plain decimal, not scientific notation", {
@@ -168,6 +168,49 @@ test_that("paths containing spaces are quoted, and paths without them are not", 
   lines <- readLines(tmp)
   expect_true("IAFILE=anchor.txt;" %in% lines)
   expect_true("PFILE=person.out;" %in% lines)
+})
+
+test_that("a typo'd estimation keyword warns, with a suggestion", {
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  expect_warning(
+    winsteps_write_control_file(tmp, "d.dat", n_items = 4, item1 = 11,
+                                estimation = list(UDECIMALZ = 4)),
+    "did you mean \"UDECIMALS\""
+  )
+})
+
+test_that("an unambiguous keyword abbreviation does not warn", {
+  # Winsteps accepts a prefix of a keyword as long as it names exactly one
+  # -- e.g. UDECIM for UDECIMALS -- so this is not a typo.
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  expect_no_warning(
+    winsteps_write_control_file(tmp, "d.dat", n_items = 4, item1 = 11,
+                                estimation = list(UDECIM = 4))
+  )
+})
+
+test_that("a typo'd extra keyword warns, but a real one does not", {
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  expect_warning(
+    winsteps_write_control_file(tmp, "d.dat", n_items = 4, item1 = 11,
+                                extra = "XWIDEE=2;"),
+    "\"XWIDEE\" is not a keyword"
+  )
+  expect_no_warning(
+    winsteps_write_control_file(tmp, "d.dat", n_items = 4, item1 = 11,
+                                extra = "XWIDE=2;")
+  )
+})
+
+test_that("the built-in estimation defaults never trigger a keyword warning", {
+  tmp <- tempfile()
+  on.exit(unlink(tmp))
+  expect_no_warning(
+    winsteps_write_control_file(tmp, "d.dat", n_items = 4, item1 = 11)
+  )
 })
 
 test_that("estimation values ignore a non-default decimal separator", {

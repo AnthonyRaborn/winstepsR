@@ -46,10 +46,13 @@
 #'   `RCONV` alongside the defaults rather than dropping `MPROX`/`MJMLE`/
 #'   etc. Set a built-in key to `NULL` to remove it (e.g.
 #'   `list(MJMLE = NULL)` to omit `MJMLE=` from the control file
-#'   entirely). Double check keyword spelling against the Winsteps manual:
-#'   an unrecognized keyword is silently ignored by Winsteps rather than
-#'   erroring, so e.g. `UDECIMALS` (not a real keyword; the correct one is
-#'   `UDECIM`) has no effect and won't be reported as a mistake.
+#'   entirely). An unrecognized keyword here or in `extra` is silently
+#'   ignored by Winsteps rather than erroring, so a typo (e.g. `UDECIMALZ`
+#'   for `UDECIMALS`) has no effect and won't be reported as a mistake by
+#'   Winsteps itself; this function warns instead, against a list of known
+#'   Winsteps keywords. An unambiguous abbreviation of a known keyword
+#'   (e.g. `UDECIM` for `UDECIMALS`, which Winsteps itself accepts) does not
+#'   warn.
 #' @param tfile Optional character vector of Winsteps table numbers to
 #'   request via `TFILE=*` ... `*;`.
 #' @param extra Optional character vector of additional raw control-file
@@ -103,7 +106,7 @@ winsteps_write_control_file <- function(file,
     MJMLE = 0,
     CONVERGE = "L",
     LCONV = 0.0001,
-    UDECIM = 4
+    UDECIMALS = 4
   )
   estimation <- utils::modifyList(default_estimation, estimation)
 
@@ -116,12 +119,20 @@ winsteps_write_control_file <- function(file,
 
   estimation <- estimation[!vapply(estimation, is.null, logical(1))]
   if (length(estimation) > 0) {
+    check_known_keywords(names(estimation))
     est_lines <- vapply(
       names(estimation),
       function(k) paste0(k, "=", fmt(estimation[[k]]), ";"),
       character(1)
     )
     lines <- c(lines, est_lines)
+  }
+
+  if (length(extra) > 0) {
+    # Only lines shaped like KEY=value carry a keyword to check; anything
+    # else in extra (e.g. a stray comment) is left alone.
+    extra_keys <- sub("^\\s*([A-Za-z0-9@_]+)\\s*=.*$", "\\1", extra)
+    check_known_keywords(extra_keys[extra_keys != extra])
   }
 
   if (!is.null(tfile)) {

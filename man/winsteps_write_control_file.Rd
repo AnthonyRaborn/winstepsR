@@ -78,10 +78,13 @@ converge on logit change, 4 decimal places -- via
 \code{RCONV} alongside the defaults rather than dropping \code{MPROX}/\code{MJMLE}/
 etc. Set a built-in key to \code{NULL} to remove it (e.g.
 \code{list(MJMLE = NULL)} to omit \verb{MJMLE=} from the control file
-entirely). Double check keyword spelling against the Winsteps manual:
-an unrecognized keyword is silently ignored by Winsteps rather than
-erroring, so e.g. \code{UDECIMALS} (not a real keyword; the correct one is
-\code{UDECIM}) has no effect and won't be reported as a mistake.}
+entirely). An unrecognized keyword here or in \code{extra} is silently
+ignored by Winsteps rather than erroring, so a typo (e.g. \code{UDECIMALZ}
+for \code{UDECIMALS}) has no effect and won't be reported as a mistake by
+Winsteps itself; this function warns instead, against a list of known
+Winsteps keywords. An unambiguous abbreviation of a known keyword
+(e.g. \code{UDECIM} for \code{UDECIMALS}, which Winsteps itself accepts) does not
+warn.}
 
 \item{tfile}{Optional character vector of Winsteps table numbers to
 request via \verb{TFILE=*} ... \verb{*;}.}
