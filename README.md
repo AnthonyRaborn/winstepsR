@@ -186,105 +186,124 @@ pass `run = FALSE`.
 
 ## How `winsteps_estimate()` fits together
 
-The diagram below traces every internal call `winsteps_estimate()` makes, in
-the order the four phases run: validate inputs, prepare data, write files,
-then (if `run = TRUE`) run Winsteps and read its output. Blue nodes are the
-main pipeline, gray nodes are file I/O helpers, and purple nodes are
-validation — most of which live in one small vocabulary of named guards
-rather than being repeated inline at each call site.
+`winsteps_estimate()` runs in four phases. The first diagram shows just those
+phases; the four that follow expand one phase each, so no single picture has
+to carry the whole call graph.
+
+Throughout, blue nodes are the main pipeline, gray nodes are file I/O
+helpers, and purple nodes are validation — most of which live in one small
+vocabulary of named guards rather than being repeated inline at each call
+site. Dashed arrows mark the work that only happens when `run = TRUE`.
+
+### The four phases
 
 ```mermaid
-flowchart TD
+flowchart LR
+    EST["winsteps_estimate()"] --> V["1. Validate<br/>& resolve"] --> P["2. Prepare<br/>data"] --> W["3. Write<br/>files"]
+    W -.-> R["4. Run Winsteps<br/>& read output"]
+
+    classDef pipeline fill:#4a6fa5,color:#fff,stroke:#2d3436;
+    class EST,V,P,W,R pipeline;
+```
+
+With `run = FALSE`, `winsteps_estimate()` stops after phase 3, having written
+the control, data, anchor, delete and batch files without invoking Winsteps.
+
+### Phase 1: Validate & resolve
+
+```mermaid
+flowchart LR
     EST["winsteps_estimate()"]
 
-    subgraph VALIDATE["Validate & resolve"]
-        RA["resolve_anchors()"]
-        WA["winsteps_anchors()"]
-        CI["check_items()"]
-        CFA["check_finite_anchors()"]
-        CK["check_keep()"]
-        CRI["check_run_id()"]
-        CNRA["check_no_reserved_args()"]
-    end
+    EST --> RA["resolve_anchors()"]
+    EST --> CK["check_keep()"]
+    EST --> CRI["check_run_id()"]
+    EST --> CNRA["check_no_reserved_args()"]
 
-    subgraph PREPARE["Prepare data"]
-        PPD["winsteps_prepare_person_data()"]
-        CCP["check_columns_present()"]
-        CHR["check_has_rows()"]
-        CSC["check_single_char()"]
-        CS["coerce_scores()"]
-        CSCC["check_single_char_codes()"]
-        CORP["check_one_response_per_pair()"]
-    end
+    RA --> WA["winsteps_anchors()"]
+    WA --> CI["check_items()"]
+    WA --> CFA["check_finite_anchors()"]
 
-    subgraph WRITE["Write files"]
-        WPD["winsteps_write_person_data()"]
-        WAF["winsteps_write_anchor_file()"]
-        WISF["winsteps_write_item_subset_file()"]
-        WCF["winsteps_write_control_file()"]
-        CPI["check_positive_ints()"]
-        CKK["check_known_keywords()"]
-        WB["winsteps_write_bat()"]
-    end
+    classDef pipeline fill:#4a6fa5,color:#fff,stroke:#2d3436;
+    classDef validate fill:#9b8bb4,color:#fff,stroke:#2d3436;
+    class EST,RA,WA pipeline;
+    class CI,CFA,CK,CRI,CNRA validate;
+```
 
-    subgraph RUN["Run Winsteps (run = TRUE)"]
-        WR["winsteps_run()"]
-        WSOS["winsteps_stop_on_status()"]
-    end
+A `winsteps_anchors` object is validated once, here at construction; the
+writers in phase 3 trust it from then on rather than re-checking it on every
+write.
 
-    subgraph READ["Read output (run = TRUE)"]
-        RPO["winsteps_read_person_output()"]
-        RIO["winsteps_read_item_output()"]
-        RR["winsteps_read_report()"]
-        RWT["read_winsteps_table()"]
-    end
+### Phase 2: Prepare data
 
-    EST --> RA --> WA
-    WA --> CI
-    WA --> CFA
-    EST --> CK
-    EST --> CRI
-    EST --> CNRA
+```mermaid
+flowchart LR
+    EST["winsteps_estimate()"] --> PPD["winsteps_prepare_person_data()"]
 
-    EST --> PPD
-    PPD --> CCP
-    PPD --> CHR
-    PPD --> CSC
-    PPD --> CI
-    PPD --> CS --> CSCC
-    PPD --> CORP
+    PPD --> CCP["check_columns_present()"]
+    PPD --> CHR["check_has_rows()"]
+    PPD --> CSC["check_single_char()"]
+    PPD --> CI["check_items()"]
+    PPD --> CORP["check_one_response_per_pair()"]
+    PPD --> CS["coerce_scores()"] --> CSCC["check_single_char_codes()"]
 
-    EST --> WPD
-    EST --> WAF
-    EST --> WISF
-    EST --> WCF
-    WCF --> CPI
-    WCF --> CKK
-    EST --> WB
+    classDef pipeline fill:#4a6fa5,color:#fff,stroke:#2d3436;
+    classDef validate fill:#9b8bb4,color:#fff,stroke:#2d3436;
+    class EST,PPD pipeline;
+    class CCP,CHR,CSC,CI,CS,CSCC,CORP validate;
+```
 
-    EST -.-> WR
-    WR --> WSOS
+`check_items()` appears here as well as in phase 1: the same guard is reused
+for the item vector coming out of the data as for the one attached to the
+anchors.
 
-    EST -.-> RPO --> RWT
-    EST -.-> RIO --> RWT
-    EST -.-> RR
+### Phase 3: Write files
+
+```mermaid
+flowchart LR
+    EST["winsteps_estimate()"]
+
+    EST --> WPD["winsteps_write_person_data()"]
+    EST --> WAF["winsteps_write_anchor_file()"]
+    EST --> WISF["winsteps_write_item_subset_file()"]
+    EST --> WB["winsteps_write_bat()"]
+    EST --> WCF["winsteps_write_control_file()"]
+
+    WCF --> CPI["check_positive_ints()"]
+    WCF --> CKK["check_known_keywords()"]
 
     classDef pipeline fill:#4a6fa5,color:#fff,stroke:#2d3436;
     classDef helper fill:#7b8794,color:#fff,stroke:#2d3436;
     classDef validate fill:#9b8bb4,color:#fff,stroke:#2d3436;
-
-    class EST,RA,WA,PPD,WR pipeline;
-    class WPD,WAF,WISF,WCF,WB,RPO,RIO,RR,RWT helper;
-    class CI,CFA,CK,CRI,CNRA,CCP,CHR,CSC,CS,CSCC,CORP,CPI,CKK,WSOS validate;
+    class EST pipeline;
+    class WPD,WAF,WISF,WCF,WB helper;
+    class CPI,CKK validate;
 ```
 
-A `winsteps_anchors` object is validated once, at construction
-(`check_items()` / `check_finite_anchors()` inside `winsteps_anchors()`);
-`winsteps_write_anchor_file()` and `winsteps_write_item_subset_file()` trust
-it from then on rather than re-checking it on every write. The dashed edges
-into `RUN` and `READ` mark the part of the graph that only executes when
-`run = TRUE` — with `run = FALSE`, `winsteps_estimate()` stops after writing
-the batch file.
+`winsteps_write_item_subset_file()` is only called when `keep_items` is
+supplied.
+
+### Phase 4: Run Winsteps & read output (`run = TRUE`)
+
+```mermaid
+flowchart LR
+    EST["winsteps_estimate()"]
+
+    EST -.-> WR["winsteps_run()"] --> WSOS["winsteps_stop_on_status()"]
+    EST -.-> RPO["winsteps_read_person_output()"] --> RWT["read_winsteps_table()"]
+    EST -.-> RIO["winsteps_read_item_output()"] --> RWT
+    EST -.-> RR["winsteps_read_report()"]
+
+    classDef pipeline fill:#4a6fa5,color:#fff,stroke:#2d3436;
+    classDef helper fill:#7b8794,color:#fff,stroke:#2d3436;
+    classDef validate fill:#9b8bb4,color:#fff,stroke:#2d3436;
+    class EST,WR pipeline;
+    class RPO,RIO,RR,RWT helper;
+    class WSOS validate;
+```
+
+Both output readers share `read_winsteps_table()`, the single parser for
+Winsteps' fixed-width table format.
 
 ## Lower-level functions
 
